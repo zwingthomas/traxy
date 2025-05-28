@@ -1,0 +1,41 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Distribution/build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# Test output / caches
+.pytest_cache/
+coverage.xml
+htmlcov/
+
+# Local config / secrets
+*.env
+.env*
+.secret.*
+
+# Git
+.git/
+.gitignore
+
+# Cloud Build config
+cloudbuild.yaml
+
+# Docker
+Dockerfile
+
+# Local SQLite files
+*.db
+
+# Logs
+*.log
