@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Log In{% endblock %}
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gray-50">
+  <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
+    <h2 class="text-3xl font-bold text-center text-green-600 mb-6">Welcome Back</h2>
+    <form method="post" action="/login" class="space-y-4">
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Username</label>
+        <input type="text" name="username" required placeholder="Your username"
+               class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Password</label>
+        <input type="password" name="password" required placeholder="••••••••"
+               class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+      </div>
+      <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2 rounded hover:bg-green-700 transition">
+        Log In
+      </button>
+    </form>
+    <p class="mt-4 text-center text-gray-600">
+      Don't have an account? <a href="/signup" class="text-green-600 hover:underline">Sign up</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

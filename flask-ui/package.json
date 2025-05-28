@@ -1,0 +1,10 @@
+{
+    "name": "traxy-frontend",
+    "version": "1.0.0",
+    "scripts": {
+      "build:css": "tailwindcss -i ./static/css/tailwind.css -o ./static/css/tailwind.css --minify"
+    },
+    "devDependencies": {
+      "tailwindcss": "^3.3.2"
+    }
+  }

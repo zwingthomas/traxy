@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+databases[postgresql]
+passlib[bcrypt]
+python-jose[cryptography]
+pydantic
+authtools
+pytest
+httpx

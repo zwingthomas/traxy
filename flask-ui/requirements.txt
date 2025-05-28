@@ -1,0 +1,6 @@
+Flask
+Flask-Login
+requests
+python-dotenv
+gunicorn
+uvicorn

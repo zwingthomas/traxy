@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="/static/css/tailwind.css" rel="stylesheet">
+  <title>{% block title %}Activity Tracker{% endblock %}</title>
+</head>
+<body class="bg-gray-100">
+  <nav class="p-4 bg-white shadow">
+    <a href="/" class="text-xl font-bold">Tracker</a>
+    {% if session.token %}
+      <a href="/dashboard" class="ml-4">Dashboard</a>
+      <a href="/logout" class="ml-4">Logout</a>
+    {% else %}
+      <a href="/login" class="ml-4">Login</a>
+      <a href="/signup" class="ml-4">Sign Up</a>
+    {% endif %}
+  </nav>
+  <main class="p-4">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
