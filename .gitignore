@@ -1,0 +1,50 @@
+# ─── Python ────────────────────────────────────────────────────────────────
+# byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# virtual env folders
+.env
+.venv/
+env/
+venv/
+
+# distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ─── Node / Flask-UI ───────────────────────────────────────────────────────
+# node modules & build output
+/flask-ui/node_modules/
+/flask-ui/build/
+
+# if you ever create a .env in flask-ui (for secrets), ignore it:
+# /flask-ui/.env
+
+# ─── Google Cloud ─────────────────────────────────────────────────────────
+# gcloudignore files should be committed (so we do NOT ignore “.gcloudignore”)
+# but if you ever generate a local secret JSON key, add it here:
+# service-account.json
+# google-credentials.json
+
+# ─── IDEs & editors ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ─── OS generated ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
