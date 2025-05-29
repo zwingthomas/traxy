@@ -8,3 +8,5 @@ pydantic
 authtools
 pytest
 httpx
+alembic==1.13.1
+psycopg2-binary

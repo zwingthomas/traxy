@@ -3,7 +3,7 @@ runtime: python39
 entrypoint: gunicorn -b :$PORT app:app
 
 env_variables:
-  API_BASE_URL: "https://traxy-backend.uc.r.appspot.com/"
+  API_BASE_URL: "https://traxy-backend.uc.r.appspot.com"
   FLASK_SECRET_KEY: "__FLASK_SECRET_KEY__"
 
 automatic_scaling:

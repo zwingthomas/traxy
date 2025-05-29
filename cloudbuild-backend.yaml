@@ -1,56 +1,9 @@
 steps:
-  # 1) Build Tailwind CSS
-  - name: node:18
-    dir: flask-ui
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        npm install
-        npm run build:css
-        rm -rf node_modules/
-
-
-  # 2) Deploy frontend
   - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
     args:
       - -c
       - |
-        # Set project
-        gcloud config set project traxy-frontend
-        gcloud config set gcloudignore/enabled true
-        # Create .gcloudignore on the fly
-        echo -e 'node_modules/\nnpm-debug.log*\n.env*\n*.log' > flask-ui/.gcloudignore
-        # fetch the secret into FLASK_SECRET_KEY
-        FLASK_SECRET_KEY=$(gcloud secrets versions access latest \
-          --secret=FRONTEND_SECRET_KEY --project=traxy-backend)
-        # substitute into the template
-        sed -e "s|__FLASK_SECRET_KEY__|$$FLASK_SECRET_KEY|g" \
-            flask-ui/app.yaml.template > flask-ui/app.yaml
-        # deploy
-        for i in 1 2 3; do
-          echo "Deploying frontend (attempt $i)…"
-          if gcloud app deploy flask-ui/app.yaml \
-              --project=traxy-frontend \
-              --quiet; then
-            echo "Frontend deployed!"
-            break
-          else
-            echo "!!! Internal error—retrying in 10s…"
-            sleep 10
-          fi
-        done
-
-  # 3) Deploy backend
-  - name: gcr.io/cloud-builders/gcloud
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        # Set project
-        gcloud config set project traxy-backend
-        gcloud config set gcloudignore/enabled true
         # fetch each secret
         DB_USER=$(gcloud secrets versions access latest --secret=DB_USER --project=traxy-backend)
         DB_PASS=$(gcloud secrets versions access latest --secret=DB_PASS --project=traxy-backend)
@@ -67,6 +20,7 @@ steps:
           -e "s|__DB_NAME__|$$DB_NAME|g" \
           -e "s|__CLOUD_SQL_CONNECTION_NAME__|$$CLOUD_SQL_CONNECTION_NAME|g" \
           -e "s|__BACKEND_SECRET_KEY__|$$BACKEND_SECRET_KEY|g" \
+          -e "s|__DB_URL__|postgresql+psycopg2://$$DB_USER:$$DB_PASS@/$$DB_NAME?host=/cloudsql/$$CLOUD_SQL_CONNECTION_NAME|g" \
           fastapi-api/app.yaml.template > fastapi-api/app.yaml
 
         for i in 1 2 3; do

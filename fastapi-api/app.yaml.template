@@ -1,6 +1,9 @@
 service: default
-runtime: python39
-entrypoint: bash -c "cd fastapi-api && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT"
+env: flex
+runtime: python
+runtime_config:
+  operating_system: ubuntu22
+entrypoint: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port $PORT"
 
 beta_settings:
   cloud_sql_instances: traxy-backend:us-central1:traxy-database
@@ -11,10 +14,19 @@ env_variables:
   DB_NAME: "__DB_NAME__"
   CLOUD_SQL_CONNECTION_NAME: "__CLOUD_SQL_CONNECTION_NAME__"
   SECRET_KEY: "__BACKEND_SECRET_KEY__"
+  DATABASE_URL: "__DB_URL__"
 
 handlers:
   - url: /.*
     script: auto
 
 automatic_scaling:
-  max_instances: 1
+  min_num_instances: 1
+  max_num_instances: 2
+  cool_down_period_sec: 90
+  cpu_utilization:
+    target_utilization: 0.65
+
+resources:
+  cpu: 1
+  memory_gb: 1
