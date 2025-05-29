@@ -17,6 +17,19 @@
       <a href="/signup" class="ml-4">Sign Up</a>
     {% endif %}
   </nav>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mx-auto px-6 py-4 space-y-2">
+        {% for category, msg in messages %}
+          <div
+            class="p-4 rounded {{ 'bg-red-100 text-red-800' if category == 'error' else 'bg-green-100 text-green-800' }}"
+          >
+            {{ msg }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
   <main class="p-4">
     {% block content %}{% endblock %}
   </main>

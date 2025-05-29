@@ -12,16 +12,87 @@
     New Tracker
   </button>
 
+  <!-- Modal backdrop -->
+  <div id="new-tracker-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+      <h3 class="text-xl font-semibold mb-4">Create New Tracker</h3>
+      <form id="new-tracker-form" action="{{ url_for('new_tracker') }}" method="POST">
+        <!-- Name -->
+        <div class="mb-4">
+          <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+          <input
+            type="text" name="title" id="title" required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+        <!-- Color -->
+        <div class="mb-4">
+          <label for="color" class="block text-sm font-medium text-gray-700">Color</label>
+          <input
+            type="color" name="color" id="color" value="#3b82f6"
+            class="mt-1 w-12 h-8 p-0 border-0"
+          />
+        </div>
+        <!-- Goal count -->
+        <div class="mb-4">
+          <label for="rule_count" class="block text-sm font-medium text-gray-700">
+            Goal count
+          </label>
+          <input 
+            type="number" name="rule_count" id="rule_count" min="1" value="1" required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+        <!-- Timeframe -->
+        <div class="mb-4">
+          <label for="rule_period" class="block text-sm font-medium text-gray-700">
+            Timeframe
+          </label>
+          <select
+            name="rule_period" id="rule_period" required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          >
+            <option value="daily">Daily</option>
+            <option value="weekdays">Every Weekday</option>
+            <option value="weekend">Every Weekend</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+            <option value="once">Once</option>
+          </select>
+        </div>
+        <!-- Visibility -->
+        <div class="mb-4">
+          <label for="visibility" class="block text-sm font-medium text-gray-700">
+            Visibility
+          </label>
+          <select
+            name="visibility" id="visibility" required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          >
+            <option value="private">Private</option>
+            <option value="friends">Friends</option>
+            <option value="public">Public</option>
+          </select>
+        </div>
+        <!-- Actions -->
+        <div class="flex justify-end space-x-2">
+          <button type="button" id="cancel-new-tracker"
+            class="px-4 py-2 rounded border">Cancel</button>
+          <button type="submit"
+            class="px-4 py-2 bg-blue-500 text-white rounded">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div
     id="calendar-container"
     class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
   >
     {% for t in trackers %}
       <div class="bg-white rounded-lg shadow p-4">
-        <h3
-          class="text-xl font-semibold mb-3"
-          data-color="{{ t.color }}"
-        >
+        <h3 class="text-xl font-semibold mb-3" data-color="{{ t.color }}">
           {{ t.name }}
         </h3>
         <div
@@ -33,6 +104,16 @@
     {% endfor %}
   </div>
 </div>
+
+<script>
+
+const openBtn = document.getElementById('new-tracker-btn');
+const modal   = document.getElementById('new-tracker-modal');
+const cancel  = document.getElementById('cancel-new-tracker');
+openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+cancel.addEventListener('click', () => modal.classList.add('hidden'));
+modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+</script>
 
 <script src="/static/js/calendar.js"></script>
 <script src="/static/js/auth.js"></script>

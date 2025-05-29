@@ -1,10 +1,10 @@
-from pydantic import BaseModel, constr
+from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Annotated, Dict
 
 class UserCreate(BaseModel):
-    username: constr(min_length=3)
-    password: constr(min_length=6)
+    username: Annotated[str, Field(min_length=3)]
+    password: Annotated[str, Field(min_length=6)]
 
 class UserOut(BaseModel):
     id: int
