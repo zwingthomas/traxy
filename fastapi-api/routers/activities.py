@@ -1,14 +1,49 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import crud, schemas, deps
 
 router = APIRouter(prefix='/api/activities', tags=['activities'])
+logger = logging.getLogger("app.routers.activities")
 
-@router.post('', status_code=201)
-def record_activity(a: schemas.ActivityCreate,
-                    db: Session = Depends(deps.get_db),
-                    current=Depends(deps.get_current_user)):
+
+@router.post("", status_code=201)
+def record_activity(
+    a: schemas.ActivityCreate,
+    db: Session = Depends(deps.get_db),
+    current=Depends(deps.get_current_user),
+):
+    logger.info(
+        "record_activity called by user_id=%s for tracker_id=%s with value=%s",
+        current.id,
+        a.tracker_id,
+        a.value,
+    )
+
     tracker = crud.get_tracker(db, a.tracker_id)
     if not tracker or tracker.user_id != current.id:
+        logger.warning(
+            "record_activity unauthorized or not found: user_id=%s tracker_id=%s",
+            current.id,
+            a.tracker_id,
+        )
         raise HTTPException(status_code=404, detail="Tracker not found")
-    return crud.create_activity(db, a)
+
+    try:
+        activity = crud.create_activity(db, a)
+        logger.info(
+            "record_activity succeeded: activity_id=%s tracker_id=%s user_id=%s",
+            activity.id,
+            a.tracker_id,
+            current.id,
+        )
+        return activity
+
+    except Exception as e:
+        logger.exception(
+            "unexpected error in record_activity for user_id=%s tracker_id=%s: %s",
+            current.id,
+            a.tracker_id,
+            e,
+        )
+        raise HTTPException(status_code=500, detail="Internal server error")
