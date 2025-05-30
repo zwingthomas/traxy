@@ -9,19 +9,27 @@ class UserCreate(BaseModel):
 class UserOut(BaseModel):
     id: int
     username: str
-    class Config: orm_mode = True
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class TrackerBase(BaseModel):
     name: str
     color: str
-    rule: Dict[str, int]
-    visibility: str
+    rule: Dict[str, int] = Field(default_factory=dict)
+    visibility: str = Field("private")
 
-class TrackerCreate(TrackerBase): pass
+class TrackerCreate(TrackerBase):
+    pass
+
 class TrackerOut(TrackerBase):
     id: int
     user_id: int
-    class Config: orm_mode = True
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class ActivityCreate(BaseModel):
     tracker_id: int
@@ -33,4 +41,4 @@ class DailyAggregate(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = 'bearer'
+    token_type: str = "bearer"

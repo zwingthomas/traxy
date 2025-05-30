@@ -97,7 +97,7 @@
         </h3>
         <div
           class="calendar"
-          data-data='{{ t.aggregate | tojson }}'
+          data-data='{{ t.aggregate | default([]) | tojson }}'
           data-color='{{ t.color }}'
         ></div>
       </div>

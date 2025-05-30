@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, session, flash
+from flask import Flask, Response, render_template, redirect, url_for, request, session, flash
 import os, requests
 
 app = Flask(__name__)
@@ -8,6 +8,16 @@ API = os.getenv('API_BASE_URL')
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" '
+        'width="16" height="16" viewBox="0 0 16 16">'
+        '<rect width="16" height="16" fill="#00ff00"/>'
+        '</svg>'
+    )
+    return Response(svg, mimetype='image/svg+xml')
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
