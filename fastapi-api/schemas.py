@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Annotated, Dict
+from typing import Annotated, List, Dict
 
 class UserCreate(BaseModel):
     username: Annotated[str, Field(min_length=3)]
@@ -14,6 +14,10 @@ class UserOut(BaseModel):
         "from_attributes": True
     }
 
+class DailyAggregate(BaseModel):
+    date: datetime
+    total: int
+
 class TrackerBase(BaseModel):
     name: str
     color: str
@@ -26,7 +30,10 @@ class TrackerCreate(TrackerBase):
 class TrackerOut(TrackerBase):
     id: int
     user_id: int
-
+    aggregate: List[DailyAggregate] = Field(
+        default_factory=list,
+        description="List of (date,total) for this tracker"
+    )
     model_config = {
         "from_attributes": True
     }

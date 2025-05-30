@@ -1,39 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="/static/css/tailwind.css" rel="stylesheet">
-  <title>{% block title %}Activity Tracker{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
-  <nav class="p-4 bg-white shadow">
-    <a href="/" class="text-xl font-bold">Traxy</a>
-    {% if session.token %}
-      <a href="/dashboard" class="ml-4">Dashboard</a>
-      <a href="/logout" class="ml-4">Logout</a>
-    {% else %}
-      <a href="/login" class="ml-4">Login</a>
-      <a href="/signup" class="ml-4">Sign Up</a>
-    {% endif %}
-  </nav>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="container mx-auto px-6 py-4 space-y-2">
-        {% for category, msg in messages %}
-          <div
-            class="p-4 rounded {{ 'bg-red-100 text-red-800' if category == 'error' else 'bg-green-100 text-green-800' }}"
-          >
-            {{ msg }}
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-  <main class="p-4">
-    {% block content %}{% endblock %}
-  </main>
-</body>
+  <script>
+    window.API_BASE_URL = "{{ API_BASE_URL }}";
+  </script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="/static/css/tailwind.css" rel="stylesheet">
+    <title>{% block title %}Activity Tracker{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
+  </head>
+  <body class="bg-gray-100">
+    <nav class="p-4 bg-white shadow">
+      <a href="/" class="text-xl font-bold">Traxy</a>
+      {% if session.token %}
+        <a href="/dashboard" class="ml-4">Dashboard</a>
+        <a href="/logout" class="ml-4">Logout</a>
+      {% else %}
+        <a href="/login" class="ml-4">Login</a>
+        <a href="/signup" class="ml-4">Sign Up</a>
+      {% endif %}
+    </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mx-auto px-6 py-4 space-y-2">
+          {% for category, msg in messages %}
+            <div
+              class="p-4 rounded {{ 'bg-red-100 text-red-800' if category == 'error' else 'bg-green-100 text-green-800' }}"
+            >
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <main class="p-4">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
 </html>

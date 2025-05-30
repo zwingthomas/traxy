@@ -56,6 +56,25 @@ def logout():
     flash("You have been logged out.", "info")
     return redirect(url_for('login'))
 
+@app.route('/api/trackers')
+def proxy_get_trackers():
+    token = session.get('token')
+    if not token:
+        return ("", 401)
+    headers = {"Authorization": f"Bearer {token}"}
+    upstream = requests.get(f"{API}/api/trackers", headers=headers)
+
+    if not upstream.ok:
+        app.logger.error("Proxy GET /trackers failed: %s %s", upstream.status_code, upstream.text)
+
+    # Builds a fresh Flask Response with raw bytes and only the Content-Type
+    resp = Response(
+        upstream.content,
+        status=upstream.status_code,
+        content_type=upstream.headers.get("Content-Type", "application/json"),
+    )
+    return resp
+
 @app.route('/dashboard')
 def dashboard():
     token = session.get('token')
@@ -141,6 +160,20 @@ def record_activity_proxy():
         r = requests.post(f"{API}/api/activities", json=payload, headers=headers)
         return (r.text, r.status_code, r.headers.items())
     except requests.RequestException as e:
+        return (str(e), 500)
+    
+@app.route('/update-tracker/<int:tid>', methods=['POST'])
+def update_tracker_proxy(tid):
+    token = session.get('token')
+    if not token:
+        return ("", 401)
+    data = request.get_json()
+    headers = {"Authorization":f"Bearer {token}","Content-Type":"application/json"}
+    try:
+        r = requests.put(f"{API}/api/trackers/{tid}", json=data, headers=headers)
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as e:
+        flash(f"Error updating tracker metadata: {e}", "error")
         return (str(e), 500)
 
 @app.route('/<username>')

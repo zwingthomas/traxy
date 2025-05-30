@@ -1,84 +1,117 @@
+function getInitialTrackers() {
+  // no longer actually used by renderAll, but kept for click-handler fallback
+  const el = document.getElementById('initial-trackers');
+  if (!el) return [];
+  try {
+    const list = JSON.parse(el.textContent);
+    list.forEach(t => {
+      if (!Array.isArray(t.aggregate)) t.aggregate = [];
+      if (typeof t.rule !== 'object' || t.rule === null) t.rule = {};
+    });
+    return list;
+  } catch {
+    console.log("Error parsing trackers");
+    return [];
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  let viewRange = 'week';
-  document.querySelectorAll('[name="viewRange"]').forEach(radio =>
-    radio.addEventListener('change', () => {
-      viewRange = radio.value;
+  window.viewRange = 'week';
+  document.querySelectorAll('[name="viewRange"]').forEach(radio => {
+    radio.addEventListener('change', ()=> {
+      window.viewRange = radio.value;
       renderAll();
-    })
-  );
+    });
+  });
   renderAll();
 });
 
-function renderAll() {
-  document.querySelectorAll('[data-tracker-id]').forEach(el => {
-    renderTracker(el);
+// renderAll async and fetch the real backend data
+async function renderAll(){
+  let trackers;
+  try {
+    trackers = await window.apiFetch('/api/trackers');
+  } catch (e) {
+    console.error("Failed to fetch /api/trackers:", e);
+    trackers = getInitialTrackers();
+  }
+  console.log("trackers from backend:", trackers);
+
+  trackers.forEach(t => {
+    const card = document.querySelector(`[data-tracker-id="${t.id}"]`);
+    if (!card) return;
+    card.dataset.aggregate = JSON.stringify(t.aggregate || []);
+    card.dataset.rule      = JSON.stringify(t.rule      || {});
+    card.dataset.color     = t.color;
+    renderCalendar(card);
   });
 }
 
-function renderTracker(el) {
-  const agg = JSON.parse(el.dataset.aggregate || '[]');
-  const rule = JSON.parse(el.dataset.rule || '{}');
-  const color = getComputedStyle(el.querySelector('h3')).color;
-  const todayISO = new Date().toISOString().slice(0,10);
-  const now = new Date();
+function renderCalendar(card) {
+  const agg    = JSON.parse(card.dataset.aggregate || '[]');
+  const rule   = JSON.parse(card.dataset.rule      || '{}');
+  const hex    = card.dataset.color                || '#00ff00';
+  const [r,g,b]= hexToRgb(hex);
+  const tid    = +card.dataset.trackerId;
+  const now    = new Date();
+  const today  = now.toISOString().slice(0,10);
   let start;
 
-  switch(window.viewRange){
-    case 'month':
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case 'year':
-      start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-      break;
-    case 'week':
-    default:
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+  switch (viewRange) {
+    case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1); break;
+    case 'year':  start = new Date(now.getFullYear()-1, now.getMonth(), now.getDate()); break;
+    default:      start = new Date(now.getFullYear(), now.getMonth(), now.getDate()-6);
   }
 
-  // build day array
-  const days = [];
-  for(let d = new Date(start); d <= now; d.setDate(d.getDate()+1)){
-    const iso = d.toISOString().slice(0,10);
-    const entry = agg.find(e=>e.date.startsWith(iso));
+  const msInDay  = 24*60*60*1000;
+  const diffDays = Math.floor((now - start)/msInDay);
+  const days     = [];
+  for (let i = 0; i <= diffDays; i++) {
+    const d     = new Date(now.getTime() - i*msInDay);
+    const iso   = d.toISOString().slice(0,10);
+    const entry = agg.find(e => e.date.split("T")[0] === iso);
     days.push({ date: iso, total: entry ? entry.total : 0 });
   }
 
-  // clear & render
-  const cal = el.querySelector('.calendar');
+  const [[, target] = [null,1]] = Object.entries(rule);
+
+  const cal = card.querySelector('.calendar');
   cal.innerHTML = '';
+  cal.className = 'calendar grid grid-cols-7 gap-1';
+
   days.forEach(day => {
     const cell = document.createElement('div');
-    cell.className = 'p-2 border rounded';
+    cell.className = 'relative w-12 h-12 rounded border flex items-center justify-center text-sm';
 
-    if(day.date === todayISO){
-      // editable
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.value = day.total;
-      input.min = 0;
-      input.className = 'w-full text-center';
-      input.style.color = color;
-      input.addEventListener('change', () => {
-        const payload = {
-          tracker_id: Number(el.dataset.trackerId),
-          value: Number(input.value)
-        };
-        fetch('/record-activity', {
+    const ratio = target>0 ? Math.min(day.total/target,1) : 0;
+    cell.style.backgroundColor = `rgba(${r},${g},${b},${ratio})`;
+    cell.style.color           = ratio>0.5 ? '#fff' : '#000';
+    cell.textContent           = day.total;
+
+    if (day.date === today) {
+      cell.style.cursor = 'pointer';
+      cell.addEventListener('click', async () => {
+        const res = await fetch('/record-activity', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        }).then(r => {
-          if(!r.ok) alert('Failed to save');
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tracker_id: tid, value: 1 })
         });
+        if (!res.ok) {
+          return alert('Could not save');
+        }
+        // after writing, re-fetch & re-render from the backend
+        await renderAll();
       });
-      cell.appendChild(input);
-    } else {
-      // readonly
-      cell.textContent = day.total;
-      cell.style.color = color;
-      cell.classList.add('bg-gray-50');
     }
 
     cal.appendChild(cell);
   });
+}
+
+function hexToRgb(h){
+  h = h.replace(/^#/,'');
+  if (h.length===3) h = h.split('').map(c=>c+c).join('');
+  const n = parseInt(h,16);
+  return [n>>16, (n>>8)&0xff, n&0xff];
 }

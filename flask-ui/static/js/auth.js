@@ -1,14 +1,32 @@
 const API_BASE = window.API_BASE_URL;
 
-export async function apiFetch(path, opts = {}) {
+window.apiFetch = async function(path, opts = {}) {
   const token = sessionStorage.getItem('token');
-  const headers = opts.headers || {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  headers['Content-Type'] = 'application/json';
-  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+  // Merge headers
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(opts.headers || {})
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers,
+    credentials: 'include'    // send Flask session cookie
+  });
+
   if (res.status === 401) {
+    // Not logged in → bounce to login
     window.location.href = '/login';
     return;
   }
-  return res.json();
-}
+
+  // If there's JSON, parse it; otherwise return the raw Response
+  const ct = res.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) {
+    return res.json();
+  }
+  return res;
+};

@@ -97,16 +97,21 @@
   >
     {% for t in trackers %}
       <div
-        class="bg-white rounded-lg shadow p-4"
+        class="tracker-card bg-white rounded-lg shadow p-4"
         data-tracker-id="{{ t.id }}"
         data-aggregate='{{ t.aggregate | default([]) | tojson }}'
         data-rule='{{ t.rule | tojson }}'
+        data-color="{{ t.color }}"
       >
-        <h3 class="text-xl font-semibold mb-3" data-color="{{ t.color }}">
+        <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn" 
+          data-tracker-id="{{ t.id }}"
+          data-name="{{ t.name }}"
+          data-color="{{ t.color }}"
+          data-rule='{{ t.rule | tojson }}'
+          data-visibility="{{ t.visibility }}">
           {{ t.name }}
         </h3>
         <p class="text-sm mb-4 text-gray-600">
-          Goal:
           {% for period, count in t.rule.items() %}
             {{ count }}× {{ period.replace('_',' ') }}
           {% endfor %}
@@ -118,15 +123,17 @@
 </div>
 
 <script>
-
-const openBtn = document.getElementById('new-tracker-btn');
-const modal   = document.getElementById('new-tracker-modal');
-const cancel  = document.getElementById('cancel-new-tracker');
-openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-cancel.addEventListener('click', () => modal.classList.add('hidden'));
-modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+  const openBtn = document.getElementById('new-tracker-btn');
+  const modal   = document.getElementById('new-tracker-modal');
+  const cancel  = document.getElementById('cancel-new-tracker');
+  openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+  cancel.addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
 </script>
 
+<script id="initial-trackers" type="application/json">
+  {{ trackers | tojson | safe }}
+</script>
 <script src="/static/js/calendar.js"></script>
 <script src="/static/js/auth.js"></script>
 {% endblock %}

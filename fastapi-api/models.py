@@ -35,6 +35,7 @@ class Tracker(Base):
     color = Column(String, nullable=True)
     rule = Column(JSON, nullable=True)
     visibility = Column(String, default='private', nullable=False)  # public, friends, private
+    activities = relationship("Activity", backref="tracker", cascade="all, delete-orphan")
 
 class Activity(Base):
     __tablename__ = 'activities'
