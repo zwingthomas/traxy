@@ -126,6 +126,23 @@ def new_tracker():
 
     return redirect(url_for('dashboard'))
 
+@app.route('/record-activity', methods=['POST'])
+def record_activity_proxy():
+    token = session.get('token')
+    if not token:
+        return ("", 401)
+
+    payload = request.get_json()
+    headers = {
+      "Authorization": f"Bearer {token}",
+      "Content-Type": "application/json"
+    }
+    try:
+        r = requests.post(f"{API}/api/activities", json=payload, headers=headers)
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as e:
+        return (str(e), 500)
+
 @app.route('/<username>')
 def public_profile(username):
     try:

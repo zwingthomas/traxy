@@ -5,12 +5,17 @@
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
     Hello, {{ user.username }}!
   </h2>
-  <button
-    id="new-tracker-btn"
-    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
-  >
-    New Tracker
-  </button>
+  <div class="flex items-center space-x-4 mb-6">
+    <button id="new-tracker-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+      New Tracker
+    </button>
+    <div class="space-x-2">
+      <label><input type="radio" name="viewRange" value="week" checked> This Week</label>
+      <label><input type="radio" name="viewRange" value="month"> This Month</label>
+      <label><input type="radio" name="viewRange" value="year"> Last 365</label>
+    </div>
+  </div>
+    
 
   <!-- Modal backdrop -->
   <div id="new-tracker-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
@@ -91,15 +96,22 @@
     class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
   >
     {% for t in trackers %}
-      <div class="bg-white rounded-lg shadow p-4">
+      <div
+        class="bg-white rounded-lg shadow p-4"
+        data-tracker-id="{{ t.id }}"
+        data-aggregate='{{ t.aggregate | default([]) | tojson }}'
+        data-rule='{{ t.rule | tojson }}'
+      >
         <h3 class="text-xl font-semibold mb-3" data-color="{{ t.color }}">
           {{ t.name }}
         </h3>
-        <div
-          class="calendar"
-          data-data='{{ t.aggregate | default([]) | tojson }}'
-          data-color='{{ t.color }}'
-        ></div>
+        <p class="text-sm mb-4 text-gray-600">
+          Goal:
+          {% for period, count in t.rule.items() %}
+            {{ count }}× {{ period.replace('_',' ') }}
+          {% endfor %}
+        </p>
+        <div class="calendar grid grid-cols-7 gap-2"></div>
       </div>
     {% endfor %}
   </div>

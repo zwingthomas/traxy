@@ -1,60 +1,84 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1) Color each <h3> from its data-color
-    document.querySelectorAll('h3[data-color]').forEach(h3 => {
-      h3.style.color = h3.dataset.color;
-    });
-  
-    // 2) Render each heatmap
-    document.querySelectorAll('.calendar').forEach(el => {
-      const data = JSON.parse(el.dataset.data || '[]');
-      const baseColor = el.dataset.color || '#4caf50';
-      const max = data.length
-        ? Math.max(...data.map(d => d.total))
-        : 1;
-  
-      // build weeks (columns)
-      const weeks = [];
-      let week = [];
-      data.forEach((d, i) => {
-        week.push(d);
-        if (new Date(d.date).getDay() === 6 || i === data.length - 1) {
-          weeks.push(week);
-          week = [];
-        }
-      });
-  
-      const grid = document.createElement('div');
-      grid.className = 'flex space-x-1';
-  
-      weeks.forEach(weekData => {
-        const col = document.createElement('div');
-        col.className = 'flex flex-col space-y-1';
-        weekData.forEach(day => {
-          const cell = document.createElement('div');
-          const intensity = day.total / max;
-          cell.style.backgroundColor =
-            day.total > 0
-              ? shadeColor(baseColor, intensity)
-              : '#ebedf0';
-          cell.title = `${day.date}: ${day.total}`;
-          cell.className = 'w-5 h-5 rounded-sm';
-          col.appendChild(cell);
-        });
-        grid.appendChild(col);
-      });
-  
-      el.appendChild(grid);
-    });
+  let viewRange = 'week';
+  document.querySelectorAll('[name="viewRange"]').forEach(radio =>
+    radio.addEventListener('change', () => {
+      viewRange = radio.value;
+      renderAll();
+    })
+  );
+  renderAll();
+});
+
+function renderAll() {
+  document.querySelectorAll('[data-tracker-id]').forEach(el => {
+    renderTracker(el);
   });
-  
-  // helper: lighten base toward white based on inverse pct
-  function shadeColor(hex, pct) {
-    const num = parseInt(hex.slice(1), 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-    const nr = Math.round(r + (255 - r) * (1 - pct));
-    const ng = Math.round(g + (255 - g) * (1 - pct));
-    const nb = Math.round(b + (255 - b) * (1 - pct));
-    return `rgb(${nr},${ng},${nb})`;
+}
+
+function renderTracker(el) {
+  const agg = JSON.parse(el.dataset.aggregate || '[]');
+  const rule = JSON.parse(el.dataset.rule || '{}');
+  const color = getComputedStyle(el.querySelector('h3')).color;
+  const todayISO = new Date().toISOString().slice(0,10);
+  const now = new Date();
+  let start;
+
+  switch(window.viewRange){
+    case 'month':
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case 'year':
+      start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      break;
+    case 'week':
+    default:
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
   }
+
+  // build day array
+  const days = [];
+  for(let d = new Date(start); d <= now; d.setDate(d.getDate()+1)){
+    const iso = d.toISOString().slice(0,10);
+    const entry = agg.find(e=>e.date.startsWith(iso));
+    days.push({ date: iso, total: entry ? entry.total : 0 });
+  }
+
+  // clear & render
+  const cal = el.querySelector('.calendar');
+  cal.innerHTML = '';
+  days.forEach(day => {
+    const cell = document.createElement('div');
+    cell.className = 'p-2 border rounded';
+
+    if(day.date === todayISO){
+      // editable
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.value = day.total;
+      input.min = 0;
+      input.className = 'w-full text-center';
+      input.style.color = color;
+      input.addEventListener('change', () => {
+        const payload = {
+          tracker_id: Number(el.dataset.trackerId),
+          value: Number(input.value)
+        };
+        fetch('/record-activity', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        }).then(r => {
+          if(!r.ok) alert('Failed to save');
+        });
+      });
+      cell.appendChild(input);
+    } else {
+      // readonly
+      cell.textContent = day.total;
+      cell.style.color = color;
+      cell.classList.add('bg-gray-50');
+    }
+
+    cal.appendChild(cell);
+  });
+}
