@@ -185,14 +185,42 @@ def update_tracker_proxy(tid):
     token = session.get('token')
     if not token:
         return ("", 401)
-    data = request.get_json()
-    headers = {"Authorization":f"Bearer {token}","Content-Type":"application/json"}
+
+    data = request.get_json()  
+    if data is None:
+        return ("Invalid JSON", 400)
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type":  "application/json"
+    }
+
     try:
-        r = requests.put(f"{API}/api/trackers/{tid}", json=data, headers=headers)
-        return (r.text, r.status_code, r.headers.items())
+        r = requests.put(
+            f"{API}/api/trackers/{tid}",
+            json=data,
+            headers=headers
+        )
     except requests.RequestException as e:
         flash(f"Error updating tracker metadata: {e}", "error")
         return (str(e), 500)
+
+    # To avoid ERR_CONTENT_DECODING_FAILED due to implied gzip,
+    # instead of returning (r.text, status, r.headers.items()),
+    # we only forward the content-type and the raw bytes:
+    excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
+    response_headers = [
+        (name, value) 
+        for (name, value) in r.headers.items() 
+        if name.lower() not in excluded_headers
+    ]
+
+    # Build a new Flask Response using the raw bytes:
+    return Response(
+        r.content,                 # raw bytes from FastAPI
+        status=r.status_code,
+        headers=response_headers
+    )
 
 @app.route('/<username>')
 def public_profile(username):

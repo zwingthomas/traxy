@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 import crud, schemas, deps
+from datetime import datetime
 
 router = APIRouter(prefix='/api/activities', tags=['activities'])
 logger = logging.getLogger("app.routers.activities")
@@ -59,4 +60,4 @@ def reset_today(
         raise HTTPException(404, "Tracker not found")
 
     # delete all activities for today
-    crud.delete_activities_for_day(db, tracker_id, date.today())
+    crud.delete_activities_for_day(db, tracker_id, datetime.today())

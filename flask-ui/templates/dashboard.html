@@ -102,6 +102,7 @@
         data-aggregate='{{ t.aggregate | default([]) | tojson }}'
         data-rule='{{ t.rule | tojson }}'
         data-color="{{ t.color }}"
+        data-visibility="{{ t.visibility }}"
       >
         <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn" 
           data-tracker-id="{{ t.id }}"
@@ -123,6 +124,7 @@
 </div>
 
 <script>
+  // “Open New Tracker” logic
   const openBtn    = document.getElementById('new-tracker-btn');
   const modal      = document.getElementById('new-tracker-modal');
   const cancelBtn  = document.getElementById('cancel-new-tracker');
@@ -135,17 +137,24 @@
   const submitBtn    = form.querySelector('button[type="submit"]');
 
   openBtn.addEventListener('click', () => {
-    titleInput.value = '';
-    colorInput.value = '#3b82f6';
-    countInput.value = '1';
-    periodSelect.value = 'daily';
-    visSelect.value = 'private';
-    form.action = "{{ url_for('new_tracker') }}";
+    titleInput.value    = '';
+    colorInput.value    = '#3b82f6';
+    countInput.value    = '1';
+    periodSelect.value  = 'daily';
+    visSelect.value     = 'private';
+    form.action         = "{{ url_for('new_tracker') }}";
+    form.method         = "POST";
     submitBtn.textContent = 'Create';
+
     modal.classList.remove('hidden');
   });
+
   cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+  modal.addEventListener('click', e => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
 </script>
 
 <script id="initial-trackers" type="application/json">
