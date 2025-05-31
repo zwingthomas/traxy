@@ -6,7 +6,8 @@
     Hello, {{ user.username }}!
   </h2>
   <div class="flex items-center space-x-4 mb-6">
-    <button id="new-tracker-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+    <button id="new-tracker-btn"
+      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
       New Tracker
     </button>
     <div class="space-x-2">
@@ -15,48 +16,38 @@
       <label><input type="radio" name="viewRange" value="year"> Last 365</label>
     </div>
   </div>
-    
-
-  <!-- Modal backdrop -->
-  <div id="new-tracker-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg shadow-lg w-96 p-6">
-      <h3 class="text-xl font-semibold mb-4">Create New Tracker</h3>
+  
+  <!-- Create/Edit Tracker Modal -->
+  <div id="new-tracker-modal"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-40">
+    <div class="bg-white rounded-lg shadow-lg w-96 p-6 relative z-50">
+      <h3 class="text-xl font-semibold mb-4" id="modal-title">
+        Create New Tracker
+      </h3>
       <form id="new-tracker-form" action="{{ url_for('new_tracker') }}" method="POST">
-        <!-- Name -->
+        <!-- Title -->
         <div class="mb-4">
           <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            type="text" name="title" id="title" required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          />
+          <input type="text" name="title" id="title" required
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
         </div>
         <!-- Color -->
         <div class="mb-4">
           <label for="color" class="block text-sm font-medium text-gray-700">Color</label>
-          <input
-            type="color" name="color" id="color" value="#3b82f6"
-            class="mt-1 w-12 h-8 p-0 border-0"
-          />
+          <input type="color" name="color" id="color" value="#3b82f6"
+                 class="mt-1 w-12 h-8 p-0 border-0" />
         </div>
         <!-- Goal count -->
         <div class="mb-4">
-          <label for="rule_count" class="block text-sm font-medium text-gray-700">
-            Goal count
-          </label>
-          <input 
-            type="number" name="rule_count" id="rule_count" min="1" value="1" required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          />
+          <label for="rule_count" class="block text-sm font-medium text-gray-700">Goal count</label>
+          <input type="number" name="rule_count" id="rule_count" min="1" value="1" required
+                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
         </div>
         <!-- Timeframe -->
         <div class="mb-4">
-          <label for="rule_period" class="block text-sm font-medium text-gray-700">
-            Timeframe
-          </label>
-          <select
-            name="rule_period" id="rule_period" required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          >
+          <label for="rule_period" class="block text-sm font-medium text-gray-700">Timeframe</label>
+          <select name="rule_period" id="rule_period" required
+                  class="mt-1 block w-full border border-gray-300 rounded px-3 py-2">
             <option value="daily">Daily</option>
             <option value="weekdays">Every Weekday</option>
             <option value="weekend">Every Weekend</option>
@@ -68,33 +59,58 @@
         </div>
         <!-- Visibility -->
         <div class="mb-4">
-          <label for="visibility" class="block text-sm font-medium text-gray-700">
-            Visibility
-          </label>
-          <select
-            name="visibility" id="visibility" required
-            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-          >
+          <label for="visibility" class="block text-sm font-medium text-gray-700">Visibility</label>
+          <select name="visibility" id="visibility" required
+                  class="mt-1 block w-full border border-gray-300 rounded px-3 py-2">
             <option value="private">Private</option>
             <option value="friends">Friends</option>
             <option value="public">Public</option>
           </select>
         </div>
         <!-- Actions -->
-        <div class="flex justify-end space-x-2">
-          <button type="button" id="cancel-new-tracker"
-            class="px-4 py-2 rounded border">Cancel</button>
-          <button type="submit"
-            class="px-4 py-2 bg-blue-500 text-white rounded">Create</button>
+        <div class="flex justify-between items-center">
+          <div>
+            <button type="button" id="cancel-new-tracker"
+                    class="px-4 py-2 rounded border">Cancel</button>
+          </div>
+          <div class="space-x-2">
+            <!-- When in “edit” mode, we will un-hide this Delete button -->
+            <button type="button" id="delete-tracker-btn"
+                    class="px-4 py-2 bg-red-500 text-white rounded hidden">
+              Delete Tracker
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-500 text-white rounded" id="save-btn">
+              Create
+            </button>
+          </div>
         </div>
       </form>
     </div>
   </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-confirm-modal"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg w-96 p-6 relative z-60">
+      <h3 class="text-xl font-semibold mb-4 text-red-600">Confirm Delete</h3>
+      <p class="mb-4">
+        Type the name of the tracker “<span id="confirm-tracker-name"></span>” to confirm deletion:
+      </p>
+      <input type="text" id="confirm-name-input"
+             class="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
+      <div class="flex justify-end space-x-2">
+        <button type="button" id="cancel-delete-btn"
+                class="px-4 py-2 rounded border">Cancel</button>
+        <button type="button" id="confirm-delete-btn"
+                class="px-4 py-2 bg-red-600 text-white rounded">DELETE</button>
+      </div>
+    </div>
+  </div>
 
-  <div
-    id="calendar-container"
-    class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-  >
+  <!-- Dashboard Cards -->
+  <div id="calendar-container"
+       class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for t in trackers %}
       <div
         class="tracker-card bg-white rounded-lg shadow p-4 z-10"
@@ -104,12 +120,7 @@
         data-color="{{ t.color }}"
         data-visibility="{{ t.visibility }}"
       >
-        <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn" 
-          data-tracker-id="{{ t.id }}"
-          data-name="{{ t.name }}"
-          data-color="{{ t.color }}"
-          data-rule='{{ t.rule | tojson }}'
-          data-visibility="{{ t.visibility }}">
+        <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn">
           {{ t.name }}
         </h3>
         <p class="text-sm mb-4 text-gray-600">
@@ -124,36 +135,41 @@
 </div>
 
 <script>
-  // “Open New Tracker” logic
+  // Show/Hide “Create/Edit” modal
   const openBtn    = document.getElementById('new-tracker-btn');
   const modal      = document.getElementById('new-tracker-modal');
   const cancelBtn  = document.getElementById('cancel-new-tracker');
   const form       = document.getElementById('new-tracker-form');
+  const saveBtn    = document.getElementById('save-btn');
+  const deleteBtn  = document.getElementById('delete-tracker-btn');
   const titleInput = document.getElementById('title');
   const colorInput = document.getElementById('color');
   const countInput = document.getElementById('rule_count');
-  const periodSelect = document.getElementById('rule_period');
-  const visSelect    = document.getElementById('visibility');
-  const submitBtn    = form.querySelector('button[type="submit"]');
+  const periodSel  = document.getElementById('rule_period');
+  const visSel     = document.getElementById('visibility');
+  const modalTitle = document.getElementById('modal-title');
 
   openBtn.addEventListener('click', () => {
-    titleInput.value    = '';
-    colorInput.value    = '#3b82f6';
-    countInput.value    = '1';
-    periodSelect.value  = 'daily';
-    visSelect.value     = 'private';
-    form.action         = "{{ url_for('new_tracker') }}";
-    form.method         = "POST";
-    submitBtn.textContent = 'Create';
+    // Prepare for “Create” mode
+    form.action = "{{ url_for('new_tracker') }}";
+    modalTitle.textContent = "Create New Tracker";
+    saveBtn.textContent = "Create";
+    deleteBtn.classList.add('hidden');  // hide Delete in “create” mode
+
+    // Clear out any previous values
+    titleInput.value   = '';
+    colorInput.value   = '#3b82f6';
+    countInput.value   = '1';
+    periodSel.value    = 'daily';
+    visSel.value       = 'private';
 
     modal.classList.remove('hidden');
   });
-
-  cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  cancelBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
   modal.addEventListener('click', e => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-    }
+    if (e.target === modal) modal.classList.add('hidden');
   });
 </script>
 

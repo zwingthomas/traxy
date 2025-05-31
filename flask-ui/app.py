@@ -145,6 +145,19 @@ def new_tracker():
 
     return redirect(url_for('dashboard'))
 
+@app.route('/delete-tracker/<int:tid>', methods=['DELETE'])
+def delete_tracker_proxy(tid):
+    token = session.get('token')
+    if not token:
+        return ("", 401)
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        r = requests.delete(f"{API}/api/trackers/{tid}", headers=headers)
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as e:
+        flash(f"Error deleting tracker: {e}", "error")
+        return (str(e), 500)
+
 @app.route('/record-activity', methods=['POST'])
 def record_activity_proxy():
     token = session.get('token')
@@ -179,16 +192,38 @@ def proxy_reset_activity():
     except requests.RequestException as e:
         flash(f"Error reseting today's activity: {e}", "error")
         return (str(e), 500)
-    
+
 @app.route('/update-tracker/<int:tid>', methods=['POST'])
 def update_tracker_proxy(tid):
     token = session.get('token')
     if not token:
         return ("", 401)
 
-    data = request.get_json()  
-    if data is None:
-        return ("Invalid JSON", 400)
+    # Read form‐encoded fields:
+    title       = request.form.get('title')
+    color       = request.form.get('color')
+    rule_count  = request.form.get('rule_count')
+    rule_period = request.form.get('rule_period')
+    visibility  = request.form.get('visibility')
+
+    # Basic checks:
+    if not (title and color and rule_count and rule_period and visibility):
+        flash("Missing required fields", "error")
+        return redirect(url_for('dashboard'))
+
+    try:
+        count = int(rule_count)
+    except ValueError:
+        flash("Invalid goal count", "error")
+        return redirect(url_for('dashboard'))
+
+    # Build JSON payload exactly as FastAPI expects:
+    payload = {
+        "name":       title,
+        "color":      color,
+        "rule":       {rule_period: count},
+        "visibility": visibility
+    }
 
     headers = {
         "Authorization": f"Bearer {token}",
@@ -196,31 +231,16 @@ def update_tracker_proxy(tid):
     }
 
     try:
-        r = requests.put(
-            f"{API}/api/trackers/{tid}",
-            json=data,
-            headers=headers
-        )
+        r = requests.put(f"{API}/api/trackers/{tid}", json=payload, headers=headers)
+        if r.status_code >= 200 and r.status_code < 300:
+            # On success, redirect the user back to the dashboard
+            return redirect(url_for('dashboard'))
+        else:
+            flash(f"Update failed: {r.status_code} {r.text}", "error")
+            return redirect(url_for('dashboard'))
     except requests.RequestException as e:
         flash(f"Error updating tracker metadata: {e}", "error")
-        return (str(e), 500)
-
-    # To avoid ERR_CONTENT_DECODING_FAILED due to implied gzip,
-    # instead of returning (r.text, status, r.headers.items()),
-    # we only forward the content-type and the raw bytes:
-    excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
-    response_headers = [
-        (name, value) 
-        for (name, value) in r.headers.items() 
-        if name.lower() not in excluded_headers
-    ]
-
-    # Build a new Flask Response using the raw bytes:
-    return Response(
-        r.content,                 # raw bytes from FastAPI
-        status=r.status_code,
-        headers=response_headers
-    )
+        return redirect(url_for('dashboard'))
 
 @app.route('/<username>')
 def public_profile(username):
