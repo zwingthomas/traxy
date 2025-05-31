@@ -63,3 +63,13 @@ def read_user_trackers(
         )
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Internal server error")
+    
+@router.get("/search", response_model=List[schemas.UserOut])
+def search_users(prefix: str, db: Session = Depends(deps.get_db)):
+    return crud.search_users_by_prefix(db, prefix, limit=10)
+
+@router.post("/{username}/friends", status_code=201)
+def add_friend(username: str, db: Session = Depends(deps.get_db),
+               current=Depends(deps.get_current_user)):
+    crud.add_friend(db, current.id, username)
+    return {"added": username}

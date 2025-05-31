@@ -162,6 +162,24 @@ def record_activity_proxy():
     except requests.RequestException as e:
         return (str(e), 500)
     
+@app.route('/api/activities/reset', methods=['DELETE'])
+def proxy_reset_activity():
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+
+    tracker_id = request.args.get("tracker_id")
+    if not tracker_id:
+        return ("Missing tracker_id", 400)
+
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        r = requests.delete(f"{API}/api/activities/reset?tracker_id={tracker_id}", headers=headers)
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as e:
+        flash(f"Error reseting today's activity: {e}", "error")
+        return (str(e), 500)
+    
 @app.route('/update-tracker/<int:tid>', methods=['POST'])
 def update_tracker_proxy(tid):
     token = session.get('token')

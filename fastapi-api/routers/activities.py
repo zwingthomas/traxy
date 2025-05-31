@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 import crud, schemas, deps
 
@@ -47,3 +47,16 @@ def record_activity(
             e,
         )
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.delete("/reset", status_code=204)
+def reset_today(
+    tracker_id: int = Query(..., description="ID of the tracker"),
+    db: Session = Depends(deps.get_db),
+    current=Depends(deps.get_current_user),
+):
+    tracker = crud.get_tracker(db, tracker_id)
+    if not tracker or tracker.user_id != current.id:
+        raise HTTPException(404, "Tracker not found")
+
+    # delete all activities for today
+    crud.delete_activities_for_day(db, tracker_id, date.today())

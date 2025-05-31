@@ -6,10 +6,22 @@ class UserCreate(BaseModel):
     username: Annotated[str, Field(min_length=3)]
     password: Annotated[str, Field(min_length=6)]
 
-class UserOut(BaseModel):
+class FriendOut(BaseModel):
     id: int
     username: str
 
+    model_config = {
+        "from_attributes": True
+    }
+
+class UserOut(BaseModel):
+    id: int
+    username: str
+    friends: List[FriendOut] = Field(
+        default_factory=list,
+        description="List of this user’s friends"
+    )
+    
     model_config = {
         "from_attributes": True
     }

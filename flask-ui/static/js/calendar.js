@@ -100,11 +100,24 @@ function renderCalendar(card) {
         if (!res.ok) {
           return alert('Could not save');
         }
-        // after writing, re-fetch & re-render from the backend
-        await renderAll();
+        await renderAll(); // after writing, re-fetch & re-render from the backend
       });
+      let pressTimer;
+      cell.addEventListener("mousedown", () => {
+        pressTimer = setTimeout(async () => {
+            const res = await fetch(`/api/activities/reset?tracker_id=${tid}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+          if (!res.ok) {
+            return alert("Could not reset today's total");
+          }
+          await renderAll(); // after writing, re-fetch & re-render from the backend
+        }, 800);
+      });
+      cell.addEventListener("mouseup",   () => clearTimeout(pressTimer));
+      cell.addEventListener("mouseleave",() => clearTimeout(pressTimer));
     }
-
     cal.appendChild(cell);
   });
 }

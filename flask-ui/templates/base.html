@@ -21,6 +21,8 @@
         <a href="/login" class="ml-4">Login</a>
         <a href="/signup" class="ml-4">Sign Up</a>
       {% endif %}
+      <input id="friend-search" placeholder="Find friends…" autocomplete="off"/>
+      <ul id="friend-suggestions" class="absolute bg-white border hidden"></ul>
     </nav>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -40,3 +42,29 @@
     </main>
   </body>
 </html>
+
+<script>
+  const input = document.getElementById("friend-search");
+  const list  = document.getElementById("friend-suggestions");
+
+  input.addEventListener("input", async () => {
+    const prefix = input.value.trim();
+    if (!prefix) return list.classList.add("hidden");
+    const users = await window.apiFetch(`/api/users/search?prefix=${prefix}`);
+    list.innerHTML = users.map(u =>
+      `<li class="p-2 hover:bg-gray-100 cursor-pointer" data-name="${u.username}">
+        ${u.username}
+      </li>`
+    ).join("");
+    list.classList.remove("hidden");
+  });
+
+  // click to add
+  list.addEventListener("click", async e => {
+    const username = e.target.dataset.name;
+    await window.apiFetch(`/users/${username}/friends`, { method: "POST" });
+    alert(`Added ${username} as friend!`);
+    list.classList.add("hidden");
+    input.value = "";
+  });
+</script>

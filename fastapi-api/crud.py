@@ -9,6 +9,7 @@ from passlib.context import CryptContext
 from jose import jwt
 
 import models, schemas
+from models import friendships 
 
 # Setup security
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -121,3 +122,33 @@ def get_daily_aggregates(db: Session, tracker_id: int, days: int = 365) -> List[
         .all()
     )
     return [{'date': r.date.isoformat(), 'total': r.total} for r in rows]
+
+def delete_activities_for_day(db: Session, tracker_id: int, day: Date) -> None:
+    start = datetime.combine(day, datetime.min.time())
+    end   = datetime.combine(day, datetime.max.time())
+    db.query(models.Activity)\
+      .filter(models.Activity.tracker_id == tracker_id,
+              models.Activity.timestamp >= start,
+              models.Activity.timestamp <= end)\
+      .delete(synchronize_session=False)
+    db.commit()
+
+# Friends
+
+def search_users_by_prefix(db: Session, prefix: str, limit: int = 10):
+    return db.query(models.User)\
+             .filter(models.User.username.ilike(f"{prefix}%"))\
+             .limit(limit)\
+             .all()
+
+def add_friend(db: Session, user_id: int, friend_username: str):
+    friend = get_user_by_username(db, friend_username)
+    if not friend:
+        raise HTTPException(404, "User not found")
+    # insert into friendships table
+    db.execute(friendships.insert().values(user_id=user_id, friend_id=friend.id))
+    db.commit()
+
+def get_friends(db: Session, user_id: int):
+    u = db.query(models.User).get(user_id)
+    return u.friends

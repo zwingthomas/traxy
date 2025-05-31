@@ -18,7 +18,7 @@
     
 
   <!-- Modal backdrop -->
-  <div id="new-tracker-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+  <div id="new-tracker-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-lg shadow-lg w-96 p-6">
       <h3 class="text-xl font-semibold mb-4">Create New Tracker</h3>
       <form id="new-tracker-form" action="{{ url_for('new_tracker') }}" method="POST">
@@ -97,7 +97,7 @@
   >
     {% for t in trackers %}
       <div
-        class="tracker-card bg-white rounded-lg shadow p-4"
+        class="tracker-card bg-white rounded-lg shadow p-4 z-10"
         data-tracker-id="{{ t.id }}"
         data-aggregate='{{ t.aggregate | default([]) | tojson }}'
         data-rule='{{ t.rule | tojson }}'
@@ -123,11 +123,28 @@
 </div>
 
 <script>
-  const openBtn = document.getElementById('new-tracker-btn');
-  const modal   = document.getElementById('new-tracker-modal');
-  const cancel  = document.getElementById('cancel-new-tracker');
-  openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-  cancel.addEventListener('click', () => modal.classList.add('hidden'));
+  const openBtn    = document.getElementById('new-tracker-btn');
+  const modal      = document.getElementById('new-tracker-modal');
+  const cancelBtn  = document.getElementById('cancel-new-tracker');
+  const form       = document.getElementById('new-tracker-form');
+  const titleInput = document.getElementById('title');
+  const colorInput = document.getElementById('color');
+  const countInput = document.getElementById('rule_count');
+  const periodSelect = document.getElementById('rule_period');
+  const visSelect    = document.getElementById('visibility');
+  const submitBtn    = form.querySelector('button[type="submit"]');
+
+  openBtn.addEventListener('click', () => {
+    titleInput.value = '';
+    colorInput.value = '#3b82f6';
+    countInput.value = '1';
+    periodSelect.value = 'daily';
+    visSelect.value = 'private';
+    form.action = "{{ url_for('new_tracker') }}";
+    submitBtn.textContent = 'Create';
+    modal.classList.remove('hidden');
+  });
+  cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
 </script>
 
@@ -136,4 +153,5 @@
 </script>
 <script src="/static/js/calendar.js"></script>
 <script src="/static/js/auth.js"></script>
+<script src="/static/js/edit-tracker.js"></script>
 {% endblock %}

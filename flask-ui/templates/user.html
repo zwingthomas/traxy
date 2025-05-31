@@ -25,10 +25,21 @@
       </div>
     {% endfor %}
   </div>
+  <button id="view-friends" class="px-4 py-2 bg-green-500 text-white rounded">Friends</button>
+  <ul id="friends-list" class="mt-4"></ul>
   {% else %}
     <p class="text-gray-600">No public trackers to show.</p>
   {% endif %}
 </div>
 
 <script src="/static/js/calendar.js"></script>
+
+<script>
+  document.getElementById("view-friends").addEventListener("click", async () => {
+  const username = "{{ username }}";  // from Jinja
+  const friends  = await window.apiFetch(`/api/users/${username}/friends`);
+  document.getElementById("friends-list").innerHTML = friends
+    .map(u => `<li>${u.username}</li>`).join("");
+});
+</script>
 {% endblock %}
