@@ -8,3 +8,8 @@ env_variables:
 
 automatic_scaling:
   max_instances: 1
+
+handlers:
+  - url: /.*
+    secure: always
+    script: auto
