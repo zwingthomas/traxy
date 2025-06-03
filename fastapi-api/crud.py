@@ -15,7 +15,7 @@ from models import friendships
 
 # Setup security
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = secrets_manager.getsecret('BACKEND_SECRET_KEY')
+SECRET_KEY = secrets_manager.get_secret('BACKEND_SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM', 'HS256')
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 60 * 24 * 7))
 
