@@ -4,25 +4,6 @@ steps:
     args:
       - -c
       - |
-        # fetch each secret
-        DB_USER=$(gcloud secrets versions access latest --secret=DB_USER --project=traxy-backend)
-        DB_PASS=$(gcloud secrets versions access latest --secret=DB_PASS --project=traxy-backend)
-        DB_NAME=$(gcloud secrets versions access latest --secret=DB_NAME --project=traxy-backend)
-        CLOUD_SQL_CONNECTION_NAME=$(gcloud secrets versions access latest \
-          --secret=CLOUD_SQL_CONNECTION_NAME --project=traxy-backend)
-        BACKEND_SECRET_KEY=$(gcloud secrets versions access latest --secret=BACKEND_SECRET_KEY \
-          --project=traxy-backend)
-
-        # substitute into the template
-        sed \
-          -e "s|__DB_USER__|$$DB_USER|g" \
-          -e "s|__DB_PASS__|$$DB_PASS|g" \
-          -e "s|__DB_NAME__|$$DB_NAME|g" \
-          -e "s|__CLOUD_SQL_CONNECTION_NAME__|$$CLOUD_SQL_CONNECTION_NAME|g" \
-          -e "s|__BACKEND_SECRET_KEY__|$$BACKEND_SECRET_KEY|g" \
-          -e "s|__DB_URL__|postgresql+psycopg2://$$DB_USER:$$DB_PASS@/$$DB_NAME?host=/cloudsql/$$CLOUD_SQL_CONNECTION_NAME|g" \
-          fastapi-api/app.yaml.template > fastapi-api/app.yaml
-
         for i in 1 2 3; do
           echo "Deploying backend (attempt $i)…"
           if gcloud app deploy fastapi-api/app.yaml \
@@ -31,7 +12,7 @@ steps:
             echo "Backend deployed!"
             break
           else
-            echo "!!! Internal error—retrying in 10s…"
+            echo "!!!  >>>>>  Internal error—retrying in 10s …"
             sleep 10
           fi
         done

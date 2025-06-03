@@ -17,12 +17,6 @@ steps:
       - |
         # Create .gcloudignore on the fly
         echo -e 'node_modules/\nnpm-debug.log*\n.env*\n*.log' > flask-ui/.gcloudignore
-        # fetch the secret into FLASK_SECRET_KEY
-        FLASK_SECRET_KEY=$(gcloud secrets versions access latest \
-          --secret=FRONTEND_SECRET_KEY --project=traxy-backend)
-        # substitute into the template
-        sed -e "s|__FLASK_SECRET_KEY__|$$FLASK_SECRET_KEY|g" \
-            flask-ui/app.yaml.template > flask-ui/app.yaml
         # deploy
         for i in 1 2 3; do
           echo "Deploying frontend (attempt $i)…"
@@ -32,7 +26,7 @@ steps:
             echo "Frontend deployed!"
             break
           else
-            echo "!!! Internal error—retrying in 10s…"
+            echo "!!!  >>>>>  Internal error—retrying in 10s …"
             sleep 10
           fi
         done

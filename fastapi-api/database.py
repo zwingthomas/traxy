@@ -4,10 +4,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# ... build your DATABASE_URL exactly as you have it ...
+import secrets_manager
+
+db_user       = secrets_manager.get_secret("DB_USER")
+db_pass       = secrets_manager.get_secret("DB_PASS")
+db_name       = secrets_manager.get_secret("DB_NAME")
+connection_id = secrets_manager.get_secret("CLOUD_SQL_CONNECTION_NAME")
+
+# Build the SQLAlchemy URL in the correct format:
+database_url = (
+    f"postgresql+psycopg2://{db_user}:{db_pass}@/"
+    f"{db_name}?host=/cloudsql/{connection_id}"
+)
 
 engine = create_engine(
-    os.getenv('DATABASE_URL'),
+    database_url,
     pool_size=5,
     max_overflow=2,
     pool_timeout=30,

@@ -1,8 +1,9 @@
 from flask import Flask, Response, render_template, redirect, url_for, request, session, flash
 import os, requests
+import secrets_manager
 
 app = Flask(__name__)
-app.secret_key = os.environ['FLASK_SECRET_KEY'] 
+app.secret_key = secrets_manager.get_secret('FRONTEND_SECRET_KEY')
 API = os.getenv('API_BASE_URL')
 
 @app.route('/')

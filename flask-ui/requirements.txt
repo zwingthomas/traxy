@@ -4,3 +4,4 @@ requests
 python-dotenv
 gunicorn
 uvicorn
+google-cloud-secret-manager>=2.0.0
