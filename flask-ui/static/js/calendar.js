@@ -57,6 +57,15 @@ function renderCalendar(card) {
   const today  = now.toISOString().slice(0,10);
   let start;
 
+  function isoMinusDays(dateObj, n) {
+    const tmp = new Date(dateObj);
+    tmp.setDate(tmp.getDate() - n);
+    return tmp.toISOString().slice(0, 10);
+  }
+  
+  const yesterday = isoMinusDays(now, 1);
+  const twoDaysAgo = isoMinusDays(now, 2);
+
   switch (viewRange) {
     case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1); break;
     case 'year':  start = new Date(now.getFullYear()-1, now.getMonth(), now.getDate()); break;
@@ -88,14 +97,14 @@ function renderCalendar(card) {
     cell.style.color           = ratio>0.5 ? '#fff' : '#000';
     cell.textContent           = day.total;
 
-    if (day.date === today) {
+    if (day.date === today || day.date === yesterday || day.date === twoDaysAgo) {
       cell.style.cursor = 'pointer';
       cell.addEventListener('click', async () => {
         const res = await fetch('/record-activity', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tracker_id: tid, value: 1 })
+          body: JSON.stringify({ tracker_id: tid, value: 1, day: day.date })
         });
         if (!res.ok) {
           return alert('Could not save');
@@ -105,12 +114,12 @@ function renderCalendar(card) {
       let pressTimer;
       cell.addEventListener("mousedown", () => {
         pressTimer = setTimeout(async () => {
-            const res = await fetch(`/api/activities/reset?tracker_id=${tid}`, {
+            const res = await fetch(`/api/activities/reset?tracker_id=${tid}&day=${day.date}`, {
             method: 'DELETE',
             credentials: 'include',
           });
           if (!res.ok) {
-            return alert("Could not reset today's total");
+            return alert("Could not reset this day's total");
           }
           await renderAll(); // after writing, re-fetch & re-render from the backend
         }, 800);

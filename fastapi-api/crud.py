@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func, cast, Date, and_
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from jose import jwt
@@ -11,7 +11,7 @@ from jose import jwt
 import secrets_manager
 
 import models, schemas
-from models import friendships 
+from models import friendships, Activity
 
 # Setup security
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -103,12 +103,30 @@ def delete_tracker(db: Session, user_id: int, tracker_id: int) -> None:
 
 # Activity and aggregates
 
-def create_activity(db: Session, a: schemas.ActivityCreate) -> models.Activity:
-    db_a = models.Activity(tracker_id=a.tracker_id, value=a.value)
-    db.add(db_a)
+def create_activity(db, tracker_id: int, value: int, ts):
+    # floor ts → date; we store everything at midnight so comparisons are easy
+    day_start = ts.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    existing = db.query(Activity).filter(
+        and_(Activity.tracker_id == tracker_id,
+             func.date(Activity.timestamp) == day_start.date())
+    ).first()
+
+    if existing:
+        existing.value += value
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    new = Activity(
+        tracker_id = tracker_id,
+        timestamp   = day_start,
+        value       = value
+    )
+    db.add(new)
     db.commit()
-    db.refresh(db_a)
-    return db_a
+    db.refresh(new)
+    return new
 
 
 def get_daily_aggregates(db: Session, tracker_id: int, days: int = 365) -> List[dict]:

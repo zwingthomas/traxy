@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
-from typing import Annotated, List, Dict
+from pydantic import BaseModel, Field, validator
+from datetime import datetime, date, timedelta
+from typing import Annotated, List, Dict, Optional
 
 class UserCreate(BaseModel):
     username: Annotated[str, Field(min_length=3)]
@@ -53,6 +53,20 @@ class TrackerOut(TrackerBase):
 class ActivityCreate(BaseModel):
     tracker_id: int
     value: int = 1
+    day: Optional[date] = None
+
+    # ensure the client can only write today / yesterday / 2-days-ago
+    @validator("day", pre=True, always=True)
+    def _validate_date(cls, v):
+        if v is None:
+            return date.today()
+
+        if isinstance(v, str):
+            v = date.fromisoformat(v)
+
+        if v < date.today() - timedelta(days=2) or v > date.today():
+            raise ValueError("date must be today or within the last 2 days")
+        return v
 
 class DailyAggregate(BaseModel):
     date: datetime

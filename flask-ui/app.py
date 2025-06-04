@@ -185,10 +185,14 @@ def proxy_reset_activity():
     tracker_id = request.args.get("tracker_id")
     if not tracker_id:
         return ("Missing tracker_id", 400)
+    
+    day = request.args.get("day")
+    if not day:
+        return ("Missing day", 400)
 
     headers = {"Authorization": f"Bearer {token}"}
     try:
-        r = requests.delete(f"{API}/api/activities/reset?tracker_id={tracker_id}", headers=headers)
+        r = requests.delete(f"{API}/api/activities/reset?tracker_id={tracker_id}&day={day}", headers=headers)
         return (r.text, r.status_code, r.headers.items())
     except requests.RequestException as e:
         flash(f"Error reseting today's activity: {e}", "error")
