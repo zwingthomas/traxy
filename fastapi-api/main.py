@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 import routers.auth, routers.users, routers.trackers, routers.activities, models
 from fastapi.middleware.cors import CORSMiddleware
+from alembic.config import CommandLine
+
 def create_app():
     app = FastAPI()
     models.init_db()

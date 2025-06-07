@@ -63,7 +63,7 @@ def get_trackers_for_user(db: Session, user_id: int, visibility: List[str], curr
     q = db.query(models.Tracker).filter(
         models.Tracker.user_id == user_id,
         models.Tracker.visibility.in_(visibility)
-    )
+    ).order_by(models.Tracker.position)
     return q.all()
 
 def get_tracker(db: Session, tracker_id: int) -> Optional[models.Tracker]:
@@ -99,6 +99,25 @@ def delete_tracker(db: Session, user_id: int, tracker_id: int) -> None:
     if not db_t or db_t.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tracker not found")
     db.delete(db_t)
+    db.commit()
+
+def reorder_trackers(db: Session, user_id: int, ordered_ids: List[int]) -> None:
+    # fetch only this user’s trackers in the given list
+    trackers = (
+        db.query(models.Tracker)
+          .filter(
+            models.Tracker.user_id == user_id,
+            models.Tracker.id.in_(ordered_ids)
+          )
+          .all()
+    )
+    id_to_obj = {t.id: t for t in trackers}
+
+    # assign the new positions
+    for new_pos, tid in enumerate(ordered_ids):
+        if tid in id_to_obj:
+            id_to_obj[tid].position = new_pos
+
     db.commit()
 
 # Activity and aggregates

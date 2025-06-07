@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 import crud, schemas, deps
 from typing import List
@@ -49,6 +49,14 @@ def create_tracker(
         logger.exception("Error in create_tracker for user_id=%s: %s", current.id, e)
         raise HTTPException(500, "Internal server error")
 
+@router.put("/reorder", status_code=204)
+def reorder_trackers(
+    payload: schemas.TrackerReorder,
+    db: Session = Depends(deps.get_db),
+    current=Depends(deps.get_current_user),
+):
+    crud.reorder_trackers(db, current.id, payload.ordered_ids)
+    return Response(status_code=204)
 
 @router.put('/{tracker_id}', response_model=schemas.TrackerOut)
 def update_tracker(

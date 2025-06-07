@@ -158,6 +158,29 @@ def delete_tracker_proxy(tid):
     except requests.RequestException as e:
         flash(f"Error deleting tracker: {e}", "error")
         return (str(e), 500)
+    
+@app.route('/trackers/reorder', methods=['PUT'])
+def proxy_reorder_trackers():
+    token = session.get('token')
+    if not token:
+        return ("", 401)
+
+    payload = request.get_json()
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    r = requests.put(f"{API}/api/trackers/reorder",
+                            json=payload,
+                            headers=headers)
+
+    if not r.ok:
+        app.logger.error("Proxy PUT /trackers/reorder failed: %s %s",
+                         r.status_code, r.text)
+
+    return (r.content, r.status_code, r.headers.items())
 
 @app.route('/record-activity', methods=['POST'])
 def record_activity_proxy():

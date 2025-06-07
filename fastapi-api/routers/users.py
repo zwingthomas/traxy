@@ -73,3 +73,10 @@ def add_friend(username: str, db: Session = Depends(deps.get_db),
                current=Depends(deps.get_current_user)):
     crud.add_friend(db, current.id, username)
     return {"added": username}
+
+@router.get("/{username}/friends", response_model=List[schemas.UserOut])
+def list_friends(username: str, db: Session = Depends(deps.get_db)):
+    user = get_user_by_username(db, username)
+    if not user:
+        raise HTTPException(404, "User not found")
+    return crud.get_friends(db, user.id)

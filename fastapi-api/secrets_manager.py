@@ -1,9 +1,14 @@
 from google.cloud import secretmanager
 import requests
+import os
 
 client = secretmanager.SecretManagerServiceClient()
 
 def get_numeric_project_number():
+
+    if os.getenv("GCP_PROJECT_NUMBER"):
+        return os.getenv("GCP_PROJECT_NUMBER")
+    
     METADATA_URL = "http://metadata.google.internal/computeMetadata/v1/project/numeric-project-id"
     HEADERS = {"Metadata-Flavor": "Google"}
     resp = requests.get(METADATA_URL, headers=HEADERS, timeout=2.0)

@@ -24,11 +24,20 @@ db_pass       = secrets_manager.get_secret("DB_PASS")
 db_name       = secrets_manager.get_secret("DB_NAME")
 connection_id = secrets_manager.get_secret("CLOUD_SQL_CONNECTION_NAME")
 
-# Build the SQLAlchemy URL in the correct format:
-database_url = (
-    f"postgresql+psycopg2://{db_user}:{db_pass}@/"
-    f"{db_name}?host=/cloudsql/{connection_id}"
-)
+if os.getenv("DB_USE_TCP"):
+    # local dev or Cloud Build migrations use TCP
+    tcp_host = os.getenv("DB_HOST", "127.0.0.1:5432")
+    database_url = (
+        f"postgresql+psycopg2://{db_user}:{db_pass}@{tcp_host}/{db_name}"
+    )
+else:
+    # App Engine standard at runtime uses Unix socket
+    database_url = (
+        f"postgresql+psycopg2://{db_user}:{db_pass}@/"
+        f"{db_name}?host=/cloudsql/{connection_id}"
+    )
+
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Override the config’s sqlalchemy.url with dynamically built URL
 config.set_main_option("sqlalchemy.url", database_url)

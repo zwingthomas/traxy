@@ -179,4 +179,31 @@
 <script src="/static/js/calendar.js"></script>
 <script src="/static/js/auth.js"></script>
 <script src="/static/js/edit-tracker.js"></script>
+
+<!--  Load SortableJS from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<!-- Initialize Sortable on grid -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('calendar-container');
+
+    Sortable.create(container, {
+      animation: 150,                // smooth slide
+      ghostClass: 'opacity-50',      // styling while dragging
+      draggable: '.tracker-card',    // only these items
+
+      onEnd: (evt) => {
+        const orderedIds = Array.from(container.children)
+          .map(el => parseInt(el.dataset.trackerId));
+
+        fetch('/trackers/reorder', {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ ordered_ids: orderedIds }),
+        });
+      }
+    });
+  });
+</script>
 {% endblock %}

@@ -50,6 +50,9 @@ class TrackerOut(TrackerBase):
         "from_attributes": True
     }
 
+class TrackerReorder(BaseModel):
+    ordered_ids: List[int]
+
 class ActivityCreate(BaseModel):
     tracker_id: int
     value: int = 1

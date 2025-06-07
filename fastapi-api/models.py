@@ -36,6 +36,7 @@ class Tracker(Base):
     rule = Column(JSON, nullable=True)
     visibility = Column(String, default='private', nullable=False)  # public, friends, private
     activities = relationship("Activity", backref="tracker", cascade="all, delete-orphan")
+    position = Column(Integer, nullable=False, default=0)
 
 class Activity(Base):
     __tablename__ = 'activities'
