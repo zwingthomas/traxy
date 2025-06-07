@@ -1,3 +1,53 @@
+/**
+ * Display a little speech-bubble input above a cell.
+ * Resolves to the entered integer or null if cancelled.
+ */
+function showInputBubble(cell) {
+  return new Promise(resolve => {
+    // clean up any existing bubble
+    cell.querySelectorAll('.input-popup').forEach(el => el.remove());
+
+    // ensure we have a positioning context
+    cell.style.position = cell.style.position || 'relative';
+
+    // build the bubble
+    const popup = document.createElement('div');
+    popup.className = 'input-popup';
+    popup.innerHTML = `
+      <label class="block mb-2 text-sm font-medium">Enter value:</label>
+      <input type="number" class="popup-input w-full mb-2 border rounded px-2 py-1" />
+      <div class="flex justify-end space-x-2">
+        <button class="confirm-btn px-3 py-1 bg-blue-500 text-white rounded">OK</button>
+      </div>
+    `;
+
+    // don’t let clicks inside the bubble close it
+    popup.addEventListener('click', e => e.stopPropagation());
+
+    cell.appendChild(popup);
+
+    const input      = popup.querySelector('.popup-input');
+    const confirmBtn = popup.querySelector('.confirm-btn');
+
+    input.focus();
+
+    confirmBtn.addEventListener('click', () => {
+      const n = parseInt(input.value,10);
+      popup.remove();
+      resolve(isNaN(n) ? null : n);
+    });
+
+    // click outside → cancel
+    document.addEventListener('click', function onDocClick(e) {
+      if (!popup.contains(e.target)) {
+        document.removeEventListener('click', onDocClick);
+        popup.remove();
+        resolve(null);
+      }
+    });
+  });
+}
+
 function getInitialTrackers() {
   // no longer actually used by renderAll, but kept for click-handler fallback
   const el = document.getElementById('initial-trackers');
@@ -125,11 +175,61 @@ function renderCalendar(card) {
           payload = { tracker_id: tid, value: 1, day: date };
         }
         else if (widgetType === 'input') {
-          const answer = prompt(`Enter value for ${trackerName}`);
-          if (answer === null) return;
-          const num = parseInt(answer, 10);
-          if (isNaN(num)) return alert("Must enter an integer");
-          payload = { tracker_id: tid, value: num, day: date };
+          // remove any old popup
+          document.querySelectorAll('.input-popup').forEach(el => el.remove());
+        
+          // build new bubble
+          const popup = document.createElement('div');
+          popup.className = 'input-popup';
+          popup.innerHTML = `
+            <input
+              type="number"
+              id="popup-input"
+              class="w-full border px-2 py-1 mb-2 rounded"
+              placeholder="Enter value…" />
+            <div class="flex justify-end space-x-2">
+              <button id="popup-ok"     class="px-3 py-1 bg-blue-500 text-white rounded">OK</button>
+            </div>
+          `;
+        
+          // attach into the cell
+          cell.appendChild(popup);
+        
+          // focus the input
+          const inputEl = popup.querySelector('#popup-input');
+          inputEl.focus();
+        
+          // wire up OK
+          popup.querySelector('#popup-ok').addEventListener('click', async () => {
+            const num = parseInt(inputEl.value, 10);
+            if (isNaN(num)) {
+              return alert("Please enter a number");
+            }
+            const payload = { tracker_id: tid, value: num, day: date };
+        
+            const res = await fetch('/record-activity', {
+              method:  'POST',
+              headers: { 'Content-Type':'application/json' },
+              body:    JSON.stringify(payload),
+            });
+            if (!res.ok) {
+              console.error("Activity failed:", await res.text());
+            } else {
+              popup.remove();
+              await renderAll();  // re‐draw
+            }
+          });
+
+          const onClickOutside = e => {
+            if (!popup.contains(e.target)) {
+              popup.remove();
+              document.removeEventListener('mousedown', onClickOutside);
+            }
+          };
+          document.addEventListener('mousedown', onClickOutside);
+        
+          // stop the outer handler from immediately re‐rendering
+          return;
         }
   
         const res = await fetch('/record-activity', {
