@@ -51,4 +51,9 @@
     font-weight: 500;
     cursor: pointer;
   }
+
+  /* Make the boolean toggles not have text as they would just be ones and zeros */
+  .tracker-card[data-widget-type="boolean"] .calendar > div {
+    color: transparent !important;
+  }
 }
