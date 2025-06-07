@@ -120,6 +120,7 @@ def new_tracker():
     rule_count  = int(request.form.get('rule_count', 1))
     rule_period = request.form.get('rule_period')
     visibility  = request.form.get('visibility')
+    widget_type = request.form.get('widget_type')
 
     # Build the rule dict: { period: count }
     rule = { rule_period: rule_count }
@@ -128,7 +129,8 @@ def new_tracker():
         "name":       title,
         "color":      color,
         "rule":       rule,
-        "visibility": visibility
+        "visibility": visibility,
+        "widget_type": widget_type
     }
     headers = {
         "Authorization": f"Bearer {token}",
@@ -233,6 +235,7 @@ def update_tracker_proxy(tid):
     rule_count  = request.form.get('rule_count')
     rule_period = request.form.get('rule_period')
     visibility  = request.form.get('visibility')
+    widget_type = request.form.get('widget_type')
 
     # Basic checks:
     if not (title and color and rule_count and rule_period and visibility):
@@ -250,7 +253,8 @@ def update_tracker_proxy(tid):
         "name":       title,
         "color":      color,
         "rule":       {rule_period: count},
-        "visibility": visibility
+        "visibility": visibility,
+        "widget_type": widget_type
     }
 
     headers = {

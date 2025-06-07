@@ -55,6 +55,7 @@ function renderCalendar(card) {
   const tid    = +card.dataset.trackerId;
   const now    = new Date();
   const today  = now.toISOString().slice(0,10);
+  const trackerName = card.querySelector('h3')?.textContent || '';
   let start;
 
   function isoMinusDays(dateObj, n) {
@@ -84,49 +85,83 @@ function renderCalendar(card) {
 
   const [[, target] = [null,1]] = Object.entries(rule);
 
+  const widgetType = card.dataset.widgetType;
   const cal = card.querySelector('.calendar');
   cal.innerHTML = '';
   cal.className = 'calendar grid grid-cols-7 gap-1';
 
-  days.forEach(day => {
+  days.forEach(dayData => {
+    // pull these out IMMEDIATELY
+    const date       = dayData.date;
+    const total      = dayData.total;
+    const isClickable = [today, yesterday, twoDaysAgo].includes(date);
+  
+    // build the cell
     const cell = document.createElement('div');
     cell.className = 'relative w-12 h-12 rounded border flex items-center justify-center text-sm';
-
-    const ratio = target>0 ? Math.min(day.total/target,1) : 0;
+    cell.dataset.date  = date;
+    cell.dataset.value = total;
+    
+    // paint it
+    const ratio = target > 0 ? Math.min(total / target, 1) : 0;
     cell.style.backgroundColor = `rgba(${r},${g},${b},${ratio})`;
-    cell.style.color           = ratio>0.5 ? '#fff' : '#000';
-    cell.textContent           = day.total;
-
-    if (day.date === today || day.date === yesterday || day.date === twoDaysAgo) {
+    cell.style.color           = ratio > 0.5 ? '#fff' : '#000';
+    cell.textContent           = total;
+    
+    if (isClickable) {
       cell.style.cursor = 'pointer';
+  
+      let   pressTimer;
+      
+      // click to record / toggle
       cell.addEventListener('click', async () => {
+        let payload;
+        if (widgetType === 'boolean') {
+          const current = Number(cell.dataset.value) || 0;
+          const next    = current === 1 ? 0 : 1;
+          payload = { tracker_id: tid, value: next, day: date };
+        }
+        else if (widgetType === 'counter') {
+          payload = { tracker_id: tid, value: 1, day: date };
+        }
+        else if (widgetType === 'input') {
+          const answer = prompt(`Enter value for ${trackerName}`);
+          if (answer === null) return;
+          const num = parseInt(answer, 10);
+          if (isNaN(num)) return alert("Must enter an integer");
+          payload = { tracker_id: tid, value: num, day: date };
+        }
+  
         const res = await fetch('/record-activity', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tracker_id: tid, value: 1, day: day.date })
+          method:  'POST',
+          headers: {'Content-Type':'application/json'},
+          body:    JSON.stringify(payload),
         });
         if (!res.ok) {
-          return alert('Could not save');
+          console.error("Activity failed:", await res.text());
+          return;
         }
-        await renderAll(); // after writing, re-fetch & re-render from the backend
+        await renderAll();
       });
-      let pressTimer;
-      cell.addEventListener("mousedown", () => {
+      
+      // long-press to reset
+      cell.addEventListener('mousedown', () => {
         pressTimer = setTimeout(async () => {
-            const res = await fetch(`/api/activities/reset?tracker_id=${tid}&day=${day.date}`, {
-            method: 'DELETE',
-            credentials: 'include',
-          });
+          const res = await fetch(
+            `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
+            { method: 'DELETE', credentials: 'include' }
+          );
           if (!res.ok) {
             return alert("Could not reset this day's total");
           }
-          await renderAll(); // after writing, re-fetch & re-render from the backend
+          await renderAll();
         }, 800);
       });
-      cell.addEventListener("mouseup",   () => clearTimeout(pressTimer));
-      cell.addEventListener("mouseleave",() => clearTimeout(pressTimer));
+      ['mouseup','mouseleave'].forEach(evt =>
+        cell.addEventListener(evt, () => clearTimeout(pressTimer))
+      );
     }
+  
     cal.appendChild(cell);
   });
 }

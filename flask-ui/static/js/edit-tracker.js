@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleInput    = document.getElementById('title');
     const colorInput    = document.getElementById('color');
     const countInput    = document.getElementById('rule_count');
+    const typeInput     = document.getElementById('widget_type');
     const periodSelect  = document.getElementById('rule_period');
     const visSelect     = document.getElementById('visibility');
     const saveBtn       = document.getElementById('save-btn');
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentName   = card.querySelector('h3').textContent.trim();
         const existingColor = card.dataset.color;
         const existingVis   = card.dataset.visibility;
+        const existingType  = card.dataset.widgetType;
         let existingRule    = {};
         try {
           existingRule = JSON.parse(card.dataset.rule || '{}');
@@ -56,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         colorInput.value       = existingColor;
         countInput.value       = String(oldCount);
         periodSelect.value     = oldPeriod;
+        typeInput.value        = existingType;
         visSelect.value        = existingVis;
         saveBtn.textContent    = "Save";
   

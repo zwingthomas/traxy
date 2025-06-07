@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from datetime import datetime, date, timedelta
 from typing import Annotated, List, Dict, Optional
+from enum import Enum
 
 class UserCreate(BaseModel):
     username: Annotated[str, Field(min_length=3)]
@@ -30,11 +31,17 @@ class DailyAggregate(BaseModel):
     date: datetime
     total: int
 
+class WidgetType(str, Enum):
+    boolean = "boolean"
+    counter = "counter"
+    input   = "input"
+
 class TrackerBase(BaseModel):
     name: str
     color: str
     rule: Dict[str, int] = Field(default_factory=dict)
     visibility: str = Field("private")
+    widget_type: WidgetType = Field(WidgetType.boolean)
 
 class TrackerCreate(TrackerBase):
     pass

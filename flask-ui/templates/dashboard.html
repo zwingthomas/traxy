@@ -57,6 +57,16 @@
             <option value="once">Once</option>
           </select>
         </div>
+        <!-- Type -->
+        <div class="mb-4">
+          <label for="widget_type" class="block text-sm font-medium text-gray-700">Type</label>
+          <select name="widget_type" id="widget_type" required
+                  class="mt-1 block w-full border border-gray-300 rounded px-3 py-2">
+            <option value="boolean">Toggle</option> <!-- boolean -->
+            <option value="counter">Counter</option>
+            <option value="input">Input</option>
+          </select>
+        </div>
         <!-- Visibility -->
         <div class="mb-4">
           <label for="visibility" class="block text-sm font-medium text-gray-700">Visibility</label>
@@ -119,6 +129,7 @@
         data-rule='{{ t.rule | tojson }}'
         data-color="{{ t.color }}"
         data-visibility="{{ t.visibility }}"
+        data-widget-type="{{ t.widget_type }}"
       >
         <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn">
           {{ t.name }}
@@ -146,6 +157,7 @@
   const colorInput = document.getElementById('color');
   const countInput = document.getElementById('rule_count');
   const periodSel  = document.getElementById('rule_period');
+  const type       = document.getElementById('widget_type');
   const visSel     = document.getElementById('visibility');
   const modalTitle = document.getElementById('modal-title');
 

@@ -11,7 +11,7 @@ from jose import jwt
 import secrets_manager
 
 import models, schemas
-from models import friendships, Activity
+from models import friendships, Activity, Tracker
 
 # Setup security
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -75,7 +75,8 @@ def create_tracker(db: Session, user_id: int, t: schemas.TrackerCreate) -> model
         name=t.name,
         color=t.color,
         rule=t.rule,
-        visibility=t.visibility
+        visibility=t.visibility,
+        widget_type=t.widget_type.value
     )
     db.add(db_t)
     db.commit()
@@ -90,6 +91,7 @@ def update_tracker(db: Session, user_id: int, tracker_id: int, t: schemas.Tracke
     db_t.color = t.color
     db_t.rule = t.rule
     db_t.visibility = t.visibility
+    db_t.widget_type = t.widget_type.value
     db.commit()
     db.refresh(db_t)
     return db_t
@@ -126,17 +128,28 @@ def create_activity(db, tracker_id: int, value: int, ts):
     # floor ts → date; we store everything at midnight so comparisons are easy
     day_start = ts.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    # look up the tracker so we know its type
+    tracker = db.query(Tracker).filter(Tracker.id == tracker_id).one()
+
     existing = db.query(Activity).filter(
-        and_(Activity.tracker_id == tracker_id,
-             func.date(Activity.timestamp) == day_start.date())
+        and_(
+            Activity.tracker_id == tracker_id,
+            func.date(Activity.timestamp) == day_start.date()
+        )
     ).first()
 
     if existing:
-        existing.value += value
+        if tracker.widget_type == 'counter':
+            # counters accumulate
+            existing.value += value
+        else:
+            # booleans and inputs overwrite
+            existing.value = value
         db.commit()
         db.refresh(existing)
         return existing
 
+    # no activity row yet → create one
     new = Activity(
         tracker_id = tracker_id,
         timestamp   = day_start,

@@ -37,6 +37,7 @@ class Tracker(Base):
     visibility = Column(String, default='private', nullable=False)  # public, friends, private
     activities = relationship("Activity", backref="tracker", cascade="all, delete-orphan")
     position = Column(Integer, nullable=False, default=0)
+    widget_type  = Column(String(16), nullable=False, default="boolean")
 
 class Activity(Base):
     __tablename__ = 'activities'
