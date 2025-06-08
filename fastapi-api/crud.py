@@ -204,3 +204,13 @@ def add_friend(db: Session, user_id: int, friend_username: str):
 def get_friends(db: Session, user_id: int):
     u = db.query(models.User).get(user_id)
     return u.friends
+
+# Return True if `other_id` is in the friend‐list of `user_id`.
+def are_friends(db: Session, user_id: int, other_id: int) -> bool:
+    row = db.query(friendships).filter(
+        and_(
+            friendships.c.user_id   == user_id,
+            friendships.c.friend_id == other_id
+        )
+    ).first()
+    return row is not None

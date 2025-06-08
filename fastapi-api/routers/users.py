@@ -67,7 +67,7 @@ def read_user_trackers(
         trackers = crud.get_trackers_for_user(
             db,
             user.id,
-            visibility.split(','),
+            visibility,
             current
         )
         out = []

@@ -1,45 +1,64 @@
 {% extends 'base.html' %}
-{% block title %}{{ username }}’s Trackers{% endblock %}
+{% block title %}{{ username }}’s Public Trackers{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-6 py-8">
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
-    {{ username }}’s Public Trackers
+    {{ username }}’s Trackers
   </h2>
 
-  {% if trackers %}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for t in trackers %}
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3
-          class="text-xl font-semibold mb-3"
-          data-color="{{ t.color }}"
-        >
-          {{ t.name }}
-        </h3>
-
-        <div
-          class="calendar"
-          data-data='{{ t.aggregate | tojson }}'
-          data-color='{{ t.color }}'
-        ></div>
-      </div>
-    {% endfor %}
+  <!-- View‐Range Controls -->
+  <div class="flex items-center space-x-4 mb-6">
+    <div class="space-x-2">
+      <label class="inline-flex items-center">
+        <input type="radio" name="viewRange" value="week" checked
+               class="form-radio text-blue-500"/>
+        <span class="ml-2">This Week</span>
+      </label>
+      <label class="inline-flex items-center">
+        <input type="radio" name="viewRange" value="month"
+               class="form-radio text-blue-500"/>
+        <span class="ml-2">This Month</span>
+      </label>
+      <label class="inline-flex items-center">
+        <input type="radio" name="viewRange" value="year"
+               class="form-radio text-blue-500"/>
+        <span class="ml-2">Last 365</span>
+      </label>
+    </div>
   </div>
-  <button id="view-friends" class="px-4 py-2 bg-green-500 text-white rounded">Friends</button>
-  <ul id="friends-list" class="mt-4"></ul>
+
+  {% if trackers %}
+    <div id="calendar-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for t in trackers %}
+        <div
+          class="tracker-card bg-white rounded-lg shadow p-4"
+          data-tracker-id="{{ t.id }}"
+          data-aggregate='{{ t.aggregate | tojson }}'
+          data-rule='{{ t.rule      | tojson }}'
+          data-color="{{ t.color }}"
+          data-widget-type="{{ t.widget_type }}"
+        >
+          <h3 class="text-xl font-semibold mb-2">
+            {{ t.name }}
+          </h3>
+          <p class="text-sm mb-4 text-gray-600">
+            {% for period, count in t.rule.items() %}
+              {{ count }}× {{ period.replace('_',' ') }}
+            {% endfor %}
+          </p>
+          <div class="calendar grid grid-cols-7 gap-2"></div>
+        </div>
+      {% endfor %}
+    </div>
   {% else %}
-    <p class="text-gray-600">No public trackers to show.</p>
+    <p class="text-gray-600">No trackers to show.</p>
   {% endif %}
 </div>
 
-<script src="/static/js/calendar.js"></script>
-
 <script>
-  document.getElementById("view-friends").addEventListener("click", async () => {
-  const username = "{{ username }}";  // from Jinja
-  const friends  = await window.apiFetch(`/api/users/${username}/friends`);
-  document.getElementById("friends-list").innerHTML = friends
-    .map(u => `<li>${u.username}</li>`).join("");
-});
+  // signal to calendar.js that we're accessing someone else's dashboard or our own from a public endpoint
+  window.PUBLIC_USERNAME = undefined;
 </script>
+<script src="/static/js/calendar.js"></script>
 {% endblock %}
