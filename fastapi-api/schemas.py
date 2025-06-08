@@ -66,17 +66,18 @@ class ActivityCreate(BaseModel):
     day: Optional[date] = None
 
     # ensure the client can only write today / yesterday / 2-days-ago
-    @validator("day", pre=True, always=True)
-    def _validate_date(cls, v):
-        if v is None:
-            return date.today()
+    # do not have access to user's timezone here thus validation is done in routers/activities.py
+    # @validator("day", pre=True, always=True)
+    # def _validate_date(cls, v):
+    #     if v is None:
+    #         return date.today()
 
-        if isinstance(v, str):
-            v = date.fromisoformat(v)
+    #     if isinstance(v, str):
+    #         v = date.fromisoformat(v)
 
-        if v < date.today() - timedelta(days=2) or v > date.today():
-            raise ValueError("date must be today or within the last 2 days")
-        return v
+    #     if v < date.today() - timedelta(days=2) or v > date.today():
+    #         raise ValueError("date must be today or within the last 2 days")
+    #     return v
 
 class DailyAggregate(BaseModel):
     date: datetime
