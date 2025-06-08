@@ -48,6 +48,22 @@ function showInputBubble(cell) {
   });
 }
 
+/**
+* Sync the browser’s IANA timezone back up to your FastAPI `/users/me` endpoint.
+*/
+async function syncTimezone() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  try {
+    // PATCH /api/users/me { timezone: "America/Los_Angeles" }
+    await window.apiFetch('/api/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ timezone: tz }),
+    });
+  } catch (e) {
+    console.error("Failed to sync timezone:", e);
+  }
+}
+
 function getInitialTrackers() {
   // no longer actually used by renderAll, but kept for click-handler fallback
   const el = document.getElementById('initial-trackers');
@@ -65,7 +81,11 @@ function getInitialTrackers() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // first, make sure our backend knows this user’s current tz
+  await syncTimezone();
+  
   window.viewRange = 'week';
   document.querySelectorAll('[name="viewRange"]').forEach(radio => {
     radio.addEventListener('change', ()=> {
