@@ -57,6 +57,23 @@ def logout():
     flash("You have been logged out.", "info")
     return redirect(url_for('login'))
 
+# maybe delete in the future
+@app.route('/api/users/me', methods=['GET','PATCH'])
+def proxy_users_me():
+    token = session.get('token')
+    headers = {}
+    if token:
+        headers['Authorization'] = f"Bearer {token}"
+    if request.method == 'GET':
+        upstream = requests.get(f"{API}/api/users/me", headers=headers)
+    else:  # PATCH
+        headers['Content-Type'] = 'application/json'
+        upstream = requests.patch(f"{API}/api/users/me",
+                                  headers=headers,
+                                  json=request.get_json())
+    return (upstream.content, upstream.status_code,
+            [('Content-Type', upstream.headers.get('Content-Type',''))])
+
 @app.route('/api/trackers')
 def proxy_get_trackers():
     token = session.get('token')
@@ -274,11 +291,11 @@ def update_tracker_proxy(tid):
         flash(f"Error updating tracker metadata: {e}", "error")
         return redirect(url_for('dashboard'))
 
-@app.route('/<username>')
+@app.route('/u/<username>')
 def public_profile(username):
     try:
         r = requests.get(
-            f"{API}/api/users/{username}/trackers?visibility=public,friends"
+            f"{API}/api/users/{username}/trackers?visibility=public"
         )
         if r.status_code == 404:
             flash("User not found.", "warning")
@@ -292,6 +309,19 @@ def public_profile(username):
         return redirect(url_for('index'))
 
     return render_template('user.html', username=username, trackers=trackers)
+
+@app.route('/api/users/<username>/trackers')
+def proxy_users_trackers(username):
+    token = session.get('token')
+    headers = {}
+    if token:
+        headers['Authorization'] = f"Bearer {token}"
+    # forward query string (e.g. ?visibility=public,friends)
+    qs = request.query_string.decode()
+    upstream = requests.get(f"{API}/api/users/{username}/trackers?{qs}",
+                            headers=headers)
+    return (upstream.content, upstream.status_code,
+            [('Content-Type', upstream.headers.get('Content-Type',''))])
 
 if __name__ == '__main__':
     app.run(debug=True)

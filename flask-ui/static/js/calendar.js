@@ -1,3 +1,14 @@
+/* Create fallback for public pages with no auth */
+const apiFetch = window.apiFetch || ((path, opts) =>
+  fetch((window.API_BASE_URL||'') + path, opts).then(res => res.json())
+);
+const isPublic = typeof window.PUBLIC_USERNAME !== "undefined";
+const TRACKERS_ENDPOINT = isPublic
+  // public profile
+  ? `/api/users/${window.PUBLIC_USERNAME}/trackers?visibility=public`
+  // your own dashboard
+  : "/api/trackers";
+
 /**
  * Display a little speech-bubble input above a cell.
  * Resolves to the entered integer or null if cancelled.
@@ -49,13 +60,13 @@ function showInputBubble(cell) {
 }
 
 /**
-* Sync the browser’s IANA timezone back up to your FastAPI `/users/me` endpoint.
+* Sync the browser’s IANA timezone back up to your FastAPI `/users/me` endpoint if on /dashboard personally
 */
 async function syncTimezone() {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   try {
     // PATCH /api/users/me { timezone: "America/Los_Angeles" }
-    await window.apiFetch('/api/users/me', {
+    await apiFetch('/api/users/me', {
       method: 'PATCH',
       body: JSON.stringify({ timezone: tz }),
     });
@@ -91,8 +102,9 @@ function getInitialTrackers() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   // first, make sure our backend knows this user’s current tz
-  await syncTimezone();
-  
+  if (!isPublic) {
+    await syncTimezone();
+  }
   window.viewRange = 'week';
   document.querySelectorAll('[name="viewRange"]').forEach(radio => {
     radio.addEventListener('change', ()=> {
@@ -107,9 +119,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function renderAll(){
   let trackers;
   try {
-    trackers = await window.apiFetch('/api/trackers');
+    trackers = await apiFetch(TRACKERS_ENDPOINT);
   } catch (e) {
-    console.error("Failed to fetch /api/trackers:", e);
+    console.error(`Failed to fetch "${TRACKERS_ENDPOINT}":`, e);
     trackers = getInitialTrackers();
   }
   console.log("trackers from backend:", trackers);
@@ -185,110 +197,111 @@ function renderCalendar(card) {
     cell.style.color           = ratio > 0.5 ? '#fff' : '#000';
     cell.textContent           = total;
     
-    if (isClickable) {
-      cell.style.cursor = 'pointer';
-  
-      let   pressTimer;
-      
-      // click to record / toggle
-      cell.addEventListener('click', async () => {
-        let payload;
-        if (widgetType === 'boolean') {
-          const current = Number(cell.dataset.value) || 0;
-          const next    = current === 1 ? 0 : 1;
-          payload = { tracker_id: tid, value: next, day: date };
-        }
-        else if (widgetType === 'counter') {
-          payload = { tracker_id: tid, value: 1, day: date };
-        }
-        else if (widgetType === 'input') {
-          // remove any old popup
-          document.querySelectorAll('.input-popup').forEach(el => el.remove());
+    if (!isPublic) {
+      if (isClickable) {
+        cell.style.cursor = 'pointer';
+    
+        let   pressTimer;
         
-          // build new bubble
-          const popup = document.createElement('div');
-          popup.className = 'input-popup';
-          popup.innerHTML = `
-            <input
-              type="number"
-              id="popup-input"
-              class="w-full border px-2 py-1 mb-2 rounded"
-              placeholder="Enter value…" />
-            <div class="flex justify-end space-x-2">
-              <button id="popup-ok"     class="px-3 py-1 bg-blue-500 text-white rounded">OK</button>
-            </div>
-          `;
-        
-          // attach into the cell
-          cell.appendChild(popup);
-        
-          // focus the input
-          const inputEl = popup.querySelector('#popup-input');
-          inputEl.focus();
-        
-          // wire up OK
-          popup.querySelector('#popup-ok').addEventListener('click', async () => {
-            const num = parseInt(inputEl.value, 10);
-            if (isNaN(num)) {
-              return alert("Please enter a number");
-            }
-            const payload = { tracker_id: tid, value: num, day: date };
-        
-            const res = await fetch('/record-activity', {
-              method:  'POST',
-              headers: { 'Content-Type':'application/json' },
-              body:    JSON.stringify(payload),
+        // click to record / toggle
+        cell.addEventListener('click', async () => {
+          let payload;
+          if (widgetType === 'boolean') {
+            const current = Number(cell.dataset.value) || 0;
+            const next    = current === 1 ? 0 : 1;
+            payload = { tracker_id: tid, value: next, day: date };
+          }
+          else if (widgetType === 'counter') {
+            payload = { tracker_id: tid, value: 1, day: date };
+          }
+          else if (widgetType === 'input') {
+            // remove any old popup
+            document.querySelectorAll('.input-popup').forEach(el => el.remove());
+          
+            // build new bubble
+            const popup = document.createElement('div');
+            popup.className = 'input-popup';
+            popup.innerHTML = `
+              <input
+                type="number"
+                id="popup-input"
+                class="w-full border px-2 py-1 mb-2 rounded"
+                placeholder="Enter value…" />
+              <div class="flex justify-end space-x-2">
+                <button id="popup-ok"     class="px-3 py-1 bg-blue-500 text-white rounded">OK</button>
+              </div>
+            `;
+          
+            // attach into the cell
+            cell.appendChild(popup);
+          
+            // focus the input
+            const inputEl = popup.querySelector('#popup-input');
+            inputEl.focus();
+          
+            // wire up OK
+            popup.querySelector('#popup-ok').addEventListener('click', async () => {
+              const num = parseInt(inputEl.value, 10);
+              if (isNaN(num)) {
+                return alert("Please enter a number");
+              }
+              const payload = { tracker_id: tid, value: num, day: date };
+          
+              const res = await fetch('/record-activity', {
+                method:  'POST',
+                headers: { 'Content-Type':'application/json' },
+                body:    JSON.stringify(payload),
+              });
+              if (!res.ok) {
+                console.error("Activity failed:", await res.text());
+              } else {
+                popup.remove();
+                await renderAll();  // re‐draw
+              }
             });
-            if (!res.ok) {
-              console.error("Activity failed:", await res.text());
-            } else {
-              popup.remove();
-              await renderAll();  // re‐draw
-            }
-          });
 
-          const onClickOutside = e => {
-            if (!popup.contains(e.target)) {
-              popup.remove();
-              document.removeEventListener('mousedown', onClickOutside);
-            }
-          };
-          document.addEventListener('mousedown', onClickOutside);
-        
-          // stop the outer handler from immediately re‐rendering
-          return;
-        }
-  
-        const res = await fetch('/record-activity', {
-          method:  'POST',
-          headers: {'Content-Type':'application/json'},
-          body:    JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          console.error("Activity failed:", await res.text());
-          return;
-        }
-        await renderAll();
-      });
-      
-      // long-press to reset
-      cell.addEventListener('mousedown', () => {
-        pressTimer = setTimeout(async () => {
-          const res = await fetch(
-            `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
-            { method: 'DELETE', credentials: 'include' }
-          );
+            const onClickOutside = e => {
+              if (!popup.contains(e.target)) {
+                popup.remove();
+                document.removeEventListener('mousedown', onClickOutside);
+              }
+            };
+            document.addEventListener('mousedown', onClickOutside);
+          
+            // stop the outer handler from immediately re‐rendering
+            return;
+          }
+    
+          const res = await fetch('/record-activity', {
+            method:  'POST',
+            headers: {'Content-Type':'application/json'},
+            body:    JSON.stringify(payload),
+          });
           if (!res.ok) {
-            return alert("Could not reset this day's total");
+            console.error("Activity failed:", await res.text());
+            return;
           }
           await renderAll();
-        }, 800);
-      });
-      ['mouseup','mouseleave'].forEach(evt =>
-        cell.addEventListener(evt, () => clearTimeout(pressTimer))
-      );
+        });
+        
+        // long-press to reset
+        cell.addEventListener('mousedown', () => {
+          pressTimer = setTimeout(async () => {
+            const res = await fetch(
+              `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
+              { method: 'DELETE', credentials: 'include' }
+            );
+            if (!res.ok) {
+              return alert("Could not reset this day's total");
+            }
+            await renderAll();
+          }, 800);
+        });
+        ['mouseup','mouseleave'].forEach(evt =>
+          cell.addEventListener(evt, () => clearTimeout(pressTimer))
+        );
+      }
     }
-  
     cal.appendChild(cell);
   });
 }

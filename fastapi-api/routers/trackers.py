@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 import crud, schemas, deps
 from typing import List
@@ -32,6 +32,45 @@ def list_trackers(
         logger.exception("Error in list_trackers for user_id=%s: %s", current.id, e)
         raise HTTPException(500, "Internal server error")
 
+@router.get(
+    "/{username}/trackers",
+    response_model=List[schemas.TrackerOut],
+)
+def read_user_trackers(
+    username: str,
+    # Compute visibility on our own
+    db: Session = Depends(deps.get_db),
+    current=Depends(deps.get_current_user_optional),
+):
+    # Look up the target user by username
+    target = crud.get_user_by_username(db, username)
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="User not found")
+
+    # Decide which visibilities you’re allowed to see
+    if current and current.id == target.id:
+        vis_list = ["private", "friends", "public"]
+    elif current and crud.are_friends(db, current.id, target.id):
+        vis_list = ["friends", "public"]
+    else:
+        vis_list = ["public"]
+
+    # Grab exactly that user’s trackers in that visibility set
+    trackers = crud.get_trackers_for_user(
+        db,
+        user_id=target.id,
+        visibility=vis_list,
+        current_user=current,
+    )
+
+    out = []
+    for t in trackers:
+        t_dict = schemas.TrackerOut.from_orm(t).dict()
+        t_dict["aggregate"] = crud.get_daily_aggregates(db, t.id)
+        out.append(t_dict)
+
+    return out
 
 @router.post('', response_model=schemas.TrackerOut)
 def create_tracker(

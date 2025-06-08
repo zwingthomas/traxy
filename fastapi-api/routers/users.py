@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 import crud, schemas, deps
 from typing import List
@@ -36,7 +36,7 @@ def update_me(
 )
 def read_user_trackers(
     username: str,
-    visibility: str = "public",
+    visibility: List[str] = Query(["public"], description="Comma‐separated list of visibilities"),
     db: Session = Depends(deps.get_db),
     current=Depends(deps.get_current_user_optional)
 ):
@@ -45,17 +45,29 @@ def read_user_trackers(
         username, getattr(current, "id", None), visibility
     )
 
+    if any(v in ("friends", "private") for v in visibility) and not current:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You must be authenticated to see friends- or private-only trackers",
+        )
+
     # First, resolve the requested user
     user = crud.get_user_by_username(db, username)
     if not user:
         logger.warning("read_user_trackers: user not found username=%s", username)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    if "private" in visibility and current.id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You may only view your own private trackers",
+        )
+
     try:
         trackers = crud.get_trackers_for_user(
             db,
             user.id,
-            visibility.split(','),
+            visibility,
             current
         )
         out = []
