@@ -48,6 +48,29 @@ function showInputBubble(cell) {
   });
 }
 
+/**
+* Sync the browser’s IANA timezone back up to your FastAPI `/users/me` endpoint.
+*/
+async function syncTimezone() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  try {
+    // PATCH /api/users/me { timezone: "America/Los_Angeles" }
+    await window.apiFetch('/api/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ timezone: tz }),
+    });
+  } catch (e) {
+    console.error("Failed to sync timezone:", e);
+  }
+}
+
+function localIsoDate(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
 function getInitialTrackers() {
   // no longer actually used by renderAll, but kept for click-handler fallback
   const el = document.getElementById('initial-trackers');
@@ -65,7 +88,11 @@ function getInitialTrackers() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // first, make sure our backend knows this user’s current tz
+  await syncTimezone();
+  
   window.viewRange = 'week';
   document.querySelectorAll('[name="viewRange"]').forEach(radio => {
     radio.addEventListener('change', ()=> {
@@ -104,18 +131,18 @@ function renderCalendar(card) {
   const [r,g,b]= hexToRgb(hex);
   const tid    = +card.dataset.trackerId;
   const now    = new Date();
-  const today  = now.toISOString().slice(0,10);
+  const today  = localIsoDate(now) 
   const trackerName = card.querySelector('h3')?.textContent || '';
   let start;
 
   function isoMinusDays(dateObj, n) {
     const tmp = new Date(dateObj);
     tmp.setDate(tmp.getDate() - n);
-    return tmp.toISOString().slice(0, 10);
+    return tmp;
   }
   
-  const yesterday = isoMinusDays(now, 1);
-  const twoDaysAgo = isoMinusDays(now, 2);
+  const yesterday = localIsoDate(isoMinusDays(now, 1));
+  const twoDaysAgo = localIsoDate(isoMinusDays(now, 2));
 
   switch (viewRange) {
     case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1); break;
@@ -128,7 +155,7 @@ function renderCalendar(card) {
   const days     = [];
   for (let i = 0; i <= diffDays; i++) {
     const d     = new Date(now.getTime() - i*msInDay);
-    const iso   = d.toISOString().slice(0,10);
+    const iso   = localIsoDate(d)
     const entry = agg.find(e => e.date.split("T")[0] === iso);
     days.push({ date: iso, total: entry ? entry.total : 0 });
   }

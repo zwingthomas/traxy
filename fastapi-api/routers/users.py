@@ -16,6 +16,19 @@ def read_current_user(
     logger.info("read_current_user called, user_id=%s", current.id)
     return current
 
+@router.patch("/me", response_model=schemas.UserOut)
+def update_me(
+    patch: dict,
+    db: Session = Depends(deps.get_db),
+    current=Depends(deps.get_current_user),
+):
+    # only allow timezone field
+    if "timezone" in patch:
+        current.timezone = patch["timezone"]
+        db.commit()
+        db.refresh(current)
+    return current
+
 
 @router.get(
     '/{username}/trackers',

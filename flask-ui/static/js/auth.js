@@ -1,5 +1,21 @@
 const API_BASE = window.API_BASE_URL;
 
+// Get timezone of user
+async function syncTimezone() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // fire & forget
+  await window.apiFetch('/api/users/me', {
+    method: 'PATCH',
+    body: JSON.stringify({ timezone: tz }),
+  });
+}
+
+// on page load
+document.addEventListener('DOMContentLoaded', async () => {
+  await syncTimezone();
+  renderAll();
+});
+
 window.apiFetch = async function(path, opts = {}) {
   const token = sessionStorage.getItem('token');
   // Merge headers
