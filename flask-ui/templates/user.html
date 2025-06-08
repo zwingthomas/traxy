@@ -57,8 +57,8 @@
 </div>
 
 <script>
-  // signal to calendar.js that we're accessing someone else's dashboard or our own from a public endpoint
-  window.PUBLIC_USERNAME = undefined;
+  // signal to calendar.js that we're on a public profile
+  window.PUBLIC_USERNAME = "{{ username|e }}";
 </script>
 <script src="/static/js/calendar.js"></script>
 {% endblock %}
