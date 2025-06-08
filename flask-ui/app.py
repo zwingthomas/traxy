@@ -274,11 +274,11 @@ def update_tracker_proxy(tid):
         flash(f"Error updating tracker metadata: {e}", "error")
         return redirect(url_for('dashboard'))
 
-@app.route('/<username>')
+@app.route('/u/<username>')
 def public_profile(username):
     try:
         r = requests.get(
-            f"{API}/api/users/{username}/trackers?visibility=public,friends"
+            f"{API}/api/users/{username}/trackers?visibility=public"
         )
         if r.status_code == 404:
             flash("User not found.", "warning")

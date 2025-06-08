@@ -12,7 +12,10 @@ def create_app():
     app.include_router(routers.activities.router)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["https://traxy-frontend.ue.r.appspot.com"],
+        allow_origins=["https://traxy-frontend.ue.r.appspot.com", 
+                       "https://traxy-frontend.uc.r.appspot.com",
+                       "https://www.traxy.app",
+                       "https://traxy.app"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
