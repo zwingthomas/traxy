@@ -12,7 +12,9 @@ async function syncTimezone() {
 
 // on page load
 document.addEventListener('DOMContentLoaded', async () => {
-  await syncTimezone();
+  if (sessionStorage.getItem('token')) {
+    await syncTimezone();
+  }
 });
 
 window.apiFetch = async function(path, opts = {}) {

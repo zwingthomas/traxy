@@ -10,7 +10,6 @@
     <title>{% block title %}Activity Tracker{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
   </head>
   <body class="bg-gray-100">
     <nav class="p-4 bg-white shadow">
@@ -41,6 +40,7 @@
     <main class="p-4">
       {% block content %}{% endblock %}
     </main>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
   </body>
 </html>
 
