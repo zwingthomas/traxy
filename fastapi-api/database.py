@@ -12,10 +12,13 @@ db_name       = secrets_manager.get_secret("DB_NAME")
 connection_id = secrets_manager.get_secret("CLOUD_SQL_CONNECTION_NAME")
 
 # Build the SQLAlchemy URL in the correct format:
-database_url = (
-    f"postgresql+psycopg2://{db_user}:{db_pass}@/"
-    f"{db_name}?host=/cloudsql/{connection_id}"
-)
+if os.getenv("DB_URL"):
+    database_url = os.getenv("DB_URL")
+else:
+    database_url = (
+        f"postgresql+psycopg2://{db_user}:{db_pass}@/"
+        f"{db_name}?host=/cloudsql/{connection_id}"
+    )
 
 engine = create_engine(
     database_url,

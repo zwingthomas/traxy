@@ -36,14 +36,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 # User
-def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
-    return db.query(models.User).filter(models.User.username == username).first()
+def get_user_by_username(db: Session, uname: str) -> Optional[models.User]:
+    return (
+        db.query(models.User)
+        .filter(func.lower(models.User.username) == uname.lower())
+        .first()
+    )
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     if get_user_by_username(db, user.username):
         raise HTTPException(status_code=400, detail="Username already taken")
     db_user = models.User(
         username=user.username,
+        usernameLower=func.lower(user.username),
         hashed_password=get_password_hash(user.password)
     )
     db.add(db_user)
