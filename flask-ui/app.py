@@ -323,5 +323,58 @@ def proxy_users_trackers(username):
     return (upstream.content, upstream.status_code,
             [('Content-Type', upstream.headers.get('Content-Type',''))])
 
+@app.route("/api/users/search")
+def proxy_user_search():
+    """
+    Pass-through proxy to backend /api/users/search.
+
+    Front-end calls:  /api/users/search?prefix=<string>
+    FastAPI backend expects:  ?prefix=<string>
+    """
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+
+    # read query-string exactly as the browser sent it
+    prefix = request.args.get("prefix", "")
+    limit  = request.args.get("limit", "10")      # optional – default=10
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        r = requests.get(
+            f"{API}/api/users/search",
+            params={"prefix": prefix, "limit": limit},
+            headers=headers,
+            timeout=5,
+        )
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as e:
+        return (str(e), 502)
+    
+@app.route("/users/<username>/friends", methods=["POST"])
+def proxy_add_friend(username):
+    """
+    Proxy a friend-add request to the FastAPI backend.
+    Front-end JS calls  POST /users/<username>/friends  (same origin).
+    """
+    token = session.get("token")
+    if not token:                # not logged in
+        return ("", 401)
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        # Backend expects no body, just the path param
+        r = requests.post(
+            f"{API}/api/users/{username}/friends",
+            headers=headers,
+            timeout=5,
+        )
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as exc:
+        return (str(exc), 502)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
