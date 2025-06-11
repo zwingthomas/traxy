@@ -356,7 +356,10 @@ def proxy_user_search():
 @app.route("/api/users/<username>/friends")
 def proxy_read_friends(username: str):
     token   = session.get("token")         # may be None for anonymous
-    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    headers = {
+        "Accept-Encoding": "identity",        # 👈︎ ask for *no* compression
+        **({"Authorization": f"Bearer {token}"} if token else {})
+    }
 
     try:
         r = requests.get(f"{API}/api/users/{username}/friends",
@@ -371,7 +374,7 @@ def proxy_read_friends(username: str):
         "Transfer-Encoding",
         "Connection",
     }
-    clean_headers = [(k, v) for k, v in r.headers.items() if k not in hop_by_hop]
+    clean_headers = [(k, v) for k, v in r.headers.items() if k.lower() not in hop_by_hop]
     return r.content, r.status_code, clean_headers
 
 

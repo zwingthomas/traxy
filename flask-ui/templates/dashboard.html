@@ -5,17 +5,18 @@
 <div class="container mx-auto px-6 py-8">
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
     Hello, {{ user.username }}!
+    <span id="friend-badge"
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-full
+                text-sm font-medium bg-blue-100 text-blue-700
+                hover:bg-blue-200 transition cursor-pointer">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M7 9a4 4 0 1 0-4-4 4 4 0 0 0 4 4m6 0a4 4 0 1 0-4-4 4 4 0 0 0 4 4M3 15a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v1H3Z"/>
+      </svg>
+      <span id="friend-count">{{ friends|length }}</span>&nbsp;friends
+    </span>
   </h2>
 
-  <span id="friend-badge"
-      class="inline-flex items-center gap-1 px-3 py-1 rounded-full
-             text-sm font-medium bg-blue-100 text-blue-700
-             hover:bg-blue-200 transition cursor-pointer">
-    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M7 9a4 4 0 1 0-4-4 4 4 0 0 0 4 4m6 0a4 4 0 1 0-4-4 4 4 0 0 0 4 4M3 15a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v1H3Z"/>
-    </svg>
-    <span id="friend-count">{{ friends|length }}</span>&nbsp;friends
-  </span>
+ 
   
   <div class="flex items-center space-x-4 mb-6">
     <button id="new-tracker-btn"
@@ -158,7 +159,7 @@
 </div>
 
 <div id="friends-overlay"
-     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+     class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
   <div class="bg-white w-80 max-w-[92vw] max-h-[80vh] rounded-xl shadow-xl
               p-6 flex flex-col scale-90 opacity-0
               transition duration-200 ease-out"
@@ -258,6 +259,29 @@
     /* `me` as real JS object */
     const me = JSON.parse('{{ user | tojson | safe }}');
 
+    /** Fetch friends from backend */
+    async function fetchFriends(){
+      const friends = await window.apiFetch(
+        `/api/users/${encodeURIComponent(me.username)}/friends`
+      );
+      renderList(friends);
+      return friends;
+    }
+
+    function renderBadge(count) {
+      countEl.textContent = count;
+    }
+
+    // Initial load
+    (async () => {
+      try {
+        const friends = await fetchFriends();
+        renderBadge(friends.length);
+      } catch (e) {
+        console.error('Friend fetch failed:', e);
+      }
+    })();
+
     /** Replace badge + list */
     function renderList(friends){
       countEl.textContent = friends.length;
@@ -271,14 +295,6 @@
               <span class="text-gray-800">${u.username}</span>
             </li>`).join('')
         : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
-    }
-
-    /** Fetch friends from backend */
-    async function fetchFriends(){
-      const friends = await window.apiFetch(
-        `/api/users/${encodeURIComponent(me.username)}/friends`
-      );
-      renderList(friends);
     }
 
     /** Open overlay */
@@ -300,7 +316,7 @@
       setTimeout(()=>overlay.classList.add('hidden'),200);
     }
 
-    badge .addEventListener('click', open);
+    badge.addEventListener('click', open);
     overlay.addEventListener('click', e=>{
       if(e.target===overlay||e.target===closeBt) close();
     });
