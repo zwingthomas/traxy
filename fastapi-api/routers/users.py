@@ -93,15 +93,34 @@ def read_user_trackers(
 def search_users(prefix: str, db: Session = Depends(deps.get_db)):
     return crud.search_users_by_prefix(db, prefix, limit=10)
 
-@router.post("/{username}/friends", status_code=201)
-def add_friend(username: str, db: Session = Depends(deps.get_db),
-               current=Depends(deps.get_current_user)):
-    crud.add_friend(db, current.id, username)
-    return {"added": username}
-
-@router.get("/{username}/friends", response_model=List[schemas.UserOut])
-def list_friends(username: str, db: Session = Depends(deps.get_db)):
-    user = get_user_by_username(db, username)
+@router.get("/{username}/friends", response_model=list[schemas.UserOut])
+def read_user_friends(
+    username: str,
+    db: Session = Depends(deps.get_db),
+    current    = Depends(deps.get_current_user_optional)   # may be None (anonymous)
+):
+    user = crud.get_user_by_username(db, username)
     if not user:
         raise HTTPException(404, "User not found")
+
+    # anonymous: only allowed if username has public profile (TODO)
+    if current is None:
+        raise HTTPException(401, "Login required")
+
+    # asking for to see someone else's friends → must already be friends
+    if current.id != user.id:
+        friend_ids = {f.id for f in crud.get_friends(db, user.id)}
+        if current.id not in friend_ids:
+            raise HTTPException(403, "Friends list is private")
+
     return crud.get_friends(db, user.id)
+
+
+@router.post("/{username}/friends", status_code=201)
+def add_friend(
+    username: str,
+    db: Session = Depends(deps.get_db),
+    current    = Depends(deps.get_current_user)
+):
+    crud.add_friend(db, current.id, username)
+    return {"added": username}

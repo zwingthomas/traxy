@@ -353,29 +353,37 @@ def proxy_user_search():
     except requests.RequestException as e:
         return (str(e), 502)
     
-@app.route("/users/<username>/friends", methods=["POST"])
-def proxy_add_friend(username):
-    """
-    Proxy a friend-add request to the FastAPI backend.
-    Front-end JS calls  POST /users/<username>/friends  (same origin).
-    """
-    token = session.get("token")
-    if not token:                # not logged in
-        return ("", 401)
-
-    headers = {"Authorization": f"Bearer {token}"}
+@app.route("/api/users/<username>/friends")
+def proxy_read_friends(username: str):
+    token   = session.get("token")         # may be None for anonymous
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     try:
-        # Backend expects no body, just the path param
-        r = requests.post(
-            f"{API}/api/users/{username}/friends",
-            headers=headers,
-            timeout=5,
-        )
-        return (r.text, r.status_code, r.headers.items())
+        r = requests.get(f"{API}/api/users/{username}/friends",
+                         headers=headers, timeout=5)
     except requests.RequestException as exc:
-        return (str(exc), 502)
+        return str(exc), 502
 
+    # ▸ Return **decoded** body and strip CE / length headers
+    hop_by_hop = {
+        "Content-Encoding",
+        "Content-Length",
+        "Transfer-Encoding",
+        "Connection",
+    }
+    clean_headers = [(k, v) for k, v in r.headers.items() if k not in hop_by_hop]
+    return r.content, r.status_code, clean_headers
+
+
+@app.route("/users/<username>/friends", methods=["POST"])
+def proxy_add_friend(username):
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+
+    r = requests.post(f"{API}/api/users/{username}/friends",
+                      headers={"Authorization": f"Bearer {token}"})
+    return (r.text, r.status_code, r.headers.items())
 
 if __name__ == '__main__':
     app.run(debug=True)

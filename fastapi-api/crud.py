@@ -198,17 +198,21 @@ def search_users_by_prefix(db: Session, prefix: str, limit: int = 10):
              .limit(limit)\
              .all()
 
-def add_friend(db: Session, user_id: int, friend_username: str):
-    friend = get_user_by_username(db, friend_username)
-    if not friend:
+def add_friend(db: Session, user_id: int, friend_username: str) -> None:
+    """Add <friend_username> as mutual friend of <user_id> (idempotent)."""
+    me      = db.get(models.User, user_id)
+    friend  = get_user_by_username(db, friend_username)
+    if not friend or me.id == friend.id:
         raise HTTPException(404, "User not found")
-    # insert into friendships table
-    db.execute(friendships.insert().values(user_id=user_id, friend_id=friend.id))
-    db.commit()
 
-def get_friends(db: Session, user_id: int):
-    u = db.query(models.User).get(user_id)
-    return u.friends
+    if friend not in me.friends:     # many-to-many append is idempotent
+        me.friends.append(friend)
+        friend.friends.append(me)    # mutual
+        db.commit()
+
+def get_friends(db: Session, user_id: int) -> list[models.User]:
+    u = db.get(models.User, user_id)
+    return u.friends if u else []
 
 # Return True if `other_id` is in the friend‐list of `user_id`.
 def are_friends(db: Session, user_id: int, other_id: int) -> bool:

@@ -79,5 +79,10 @@
     alert(`Added ${username} as friend!`);
     list.classList.add("hidden");
     input.value = "";
+
+    await window.apiFetch(`/users/${encodeURIComponent(username)}/friends`, {
+      method: 'POST'
+    });
+    document.dispatchEvent(new Event('friend-added'));
   });
 </script>
