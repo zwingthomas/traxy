@@ -13,7 +13,6 @@ async function syncTimezone() {
 // on page load
 document.addEventListener('DOMContentLoaded', async () => {
   await syncTimezone();
-  renderAll();
 });
 
 window.apiFetch = async function(path, opts = {}) {

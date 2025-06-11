@@ -339,7 +339,8 @@ def proxy_user_search():
     prefix = request.args.get("prefix", "")
     limit  = request.args.get("limit", "10")      # optional – default=10
 
-    headers = {"Authorization": f"Bearer {token}"}
+    headers =  {"Authorization": f"Bearer {token}",
+                "Accept-Encoding": "identity"}
 
     try:
         r = requests.get(
