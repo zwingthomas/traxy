@@ -65,4 +65,84 @@
   window.PUBLIC_USERNAME = "{{ username|e }}";
 </script>
 <script src="/static/js/calendar.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    /** Elements */
+    const badge   = document.getElementById('friend-badge');
+    const overlay = document.getElementById('friends-overlay');
+    const panel   = document.getElementById('friends-panel');
+    const listUL  = document.getElementById('friends-list');
+    const closeBt = document.getElementById('friends-close');
+    const countEl = document.getElementById('friend-count');
+
+    /* `me` as real JS object */
+    const me = JSON.parse('{{ user | tojson | safe }}');
+
+    /** Fetch friends from backend */
+    async function fetchFriends(){
+      const friends = await window.apiFetch(
+        `/api/users/${encodeURIComponent(me.username)}/friends`
+      );
+      renderList(friends);
+      return friends;
+    }
+
+    function renderBadge(count) {
+      countEl.textContent = count;
+      document.getElementById('friend-label').textContent =`friend${count === 1 ? '' : 's'}`;
+    }
+
+    // Initial load
+    (async () => {
+      try {
+        const friends = await fetchFriends();
+        renderBadge(friends.length);
+      } catch (e) {
+        console.error('Friend fetch failed:', e);
+      }
+    })();
+
+    /** Replace badge + list */
+    function renderList(friends){
+      countEl.textContent = friends.length;
+      listUL.innerHTML = friends.length
+        ? friends.map(u => `
+            <li class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
+              <span class="inline-flex justify-center items-center h-8 w-8 rounded-full
+                          bg-blue-500 text-white uppercase text-sm">
+                ${u.username[0]}
+              </span>
+              <span class="text-gray-800">${u.username}</span>
+            </li>`).join('')
+        : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
+    }
+
+    /** Open overlay */
+    async function open(){
+      try{
+        await fetchFriends();
+        overlay.classList.remove('hidden');
+        // Tailwind-only “pop-in” without @keyframes
+        requestAnimationFrame(()=>panel.classList.remove('scale-90','opacity-0'));
+      }catch(err){
+        console.error('[friends-overlay] fetch failed',err);
+        alert('Could not fetch friends');
+      }
+    }
+
+    /** Close overlay */
+    function close(){
+      panel.classList.add('scale-90','opacity-0');
+      setTimeout(()=>overlay.classList.add('hidden'),200);
+    }
+
+    badge.addEventListener('click', open);
+    overlay.addEventListener('click', e=>{
+      if(e.target===overlay||e.target===closeBt) close();
+    });
+
+    /* Whenever another part of the UI adds a friend, dispatch: */
+    document.addEventListener('friend-added', fetchFriends);
+  });
+</script>
 {% endblock %}

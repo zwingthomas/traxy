@@ -12,7 +12,8 @@
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
         <path d="M7 9a4 4 0 1 0-4-4 4 4 0 0 0 4 4m6 0a4 4 0 1 0-4-4 4 4 0 0 0 4 4M3 15a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v1H3Z"/>
       </svg>
-      <span id="friend-count">{{ friends|length }}</span>&nbsp;friends
+      <span id="friend-count">{{ friends|length }}</span>
+      <span id="friend-label">friends</span>&nbsp;
     </span>
   </h2>
 
@@ -270,6 +271,7 @@
 
     function renderBadge(count) {
       countEl.textContent = count;
+      document.getElementById('friend-label').textContent =`friend${count === 1 ? '' : 's'}`;
     }
 
     // Initial load
