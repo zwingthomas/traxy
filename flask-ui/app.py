@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, redirect, url_for, request, session, flash
+from flask import Flask, Response, render_template, redirect, url_for, request, session, flash, g
 import os, requests
 import secrets_manager
 
@@ -299,6 +299,7 @@ def public_profile(username):
         headers = {}
         if token:
             headers['Authorization'] = f"Bearer {token}"
+
         r = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
         if r.status_code == 404:
             flash("User not found.", "warning")
@@ -307,11 +308,19 @@ def public_profile(username):
             flash(f"Error fetching public profile: {r.status_code} — {r.text}", "error")
             return redirect(url_for('index'))
         trackers = r.json()
+
+        friends = []
+        are_friends = False
+        r = requests.get(f"{API}/api/users/{username}/friends", headers=headers)
+        if r.ok:
+            are_friends = True
+            friends = r.json()
+
     except requests.RequestException as e:
         flash(f"Error fetching public profile: {e}", "error")
         return redirect(url_for('index'))
 
-    return render_template('user.html', username=username, trackers=trackers)
+    return render_template('user.html', username=username, friends=friends, trackers=trackers, are_friends=are_friends)
 
 @app.route('/api/users/<username>/trackers')
 def proxy_users_trackers(username):

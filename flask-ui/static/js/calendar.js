@@ -235,8 +235,6 @@ function renderCalendar(card) {
     if (!isPublic) {
       if (isClickable) {
         cell.style.cursor = 'pointer';
-    
-        let   pressTimer;
         
         // click to record / toggle
         async function increment() {
