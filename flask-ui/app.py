@@ -50,6 +50,7 @@ def login():
         except requests.RequestException as e:
             flash(f"Login error: {e}", "error")
     return render_template('login.html')
+    
 
 @app.route('/logout')
 def logout():
@@ -386,6 +387,23 @@ def proxy_add_friend(username):
     r = requests.post(f"{API}/api/users/{username}/friends",
                       headers={"Authorization": f"Bearer {token}"})
     return (r.text, r.status_code, r.headers.items())
+
+@app.context_processor
+def inject_current_user():
+    token = session.get('token')
+    user = None
+    if token:
+        try:
+            # Ask API for the current user
+            resp = requests.get(
+                f"{API}/api/users/me",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if resp.ok:
+                user = resp.json()
+        except requests.RequestException:
+            pass
+    return {"current_user": user}
 
 if __name__ == '__main__':
     app.run(debug=True)

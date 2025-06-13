@@ -12,18 +12,79 @@
     <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
   </head>
   <body class="bg-gray-100">
-    <nav class="p-4 bg-white shadow">
-      <a href="/" class="text-xl font-bold">Traxy</a>
-      {% if session.token %}
-        <a href="/dashboard" class="ml-4">Dashboard</a>
-        <a href="/logout" class="ml-4">Logout</a>
-      {% else %}
-        <a href="/login" class="ml-4">Login</a>
-        <a href="/signup" class="ml-4">Sign Up</a>
-      {% endif %}
-      <input id="friend-search" placeholder="Find friends…" autocomplete="on"/>
-      <ul id="friend-suggestions" class="absolute bg-white border hidden"></ul>
+    <!-- NAV BAR -->
+    <nav class="bg-white shadow">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center">
+          
+          <!-- Left group: Traxy + Dashboard (only if logged in) -->
+          <div class="flex items-center space-x-4">
+            <a href="/" class="text-lg font-bold text-gray-800">Traxy</a>
+            {% if current_user %}
+              <a href="/dashboard"
+                 class="text-sm text-gray-600 hover:text-gray-800">
+                Dashboard
+              </a>
+            {% endif %}
+          </div>
+    
+          <!-- Center group: Find friends -->
+          <div class="flex-1 flex justify-center">
+            {% if current_user %}
+            <input id="friend-search"
+                   placeholder="Find friends"
+                   autocomplete="on"
+                   class="focus:outline-none focus:ring focus:border-blue-300
+                          w-64 border border-gray-300 rounded px-3 py-1"/>
+            <ul id="friend-suggestions"
+                class="absolute bg-white border hidden"></ul>
+            {% endif %}
+          </div>
+    
+          <!-- Right group: Hamburger menu -->
+          <div class="relative">
+            <button id="menu-button"
+                    class="p-2 focus:outline-none focus:ring rounded
+                           text-gray-600 hover:text-gray-800"
+                    aria-haspopup="true" aria-expanded="false">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor"
+                   viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+    
+            <div id="menu"
+                 class="hidden absolute right-0 mt-2 w-40 bg-white
+                        rounded-md shadow-lg py-1 z-20"
+                 role="menu" aria-orientation="vertical"
+                 aria-labelledby="menu-button">
+              
+              {% if current_user %}
+                <a href="/logout"
+                   class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                   role="menuitem">
+                  Log out
+                </a>
+              {% else %}
+                <a href="/login"
+                   class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+                   role="menuitem">
+                  Sign in
+                </a>
+                <a href="/signup"
+                   class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
+                   role="menuitem">
+                  Sign up
+                </a>
+              {% endif %}
+    
+            </div>
+          </div>
+        </div>
+      </div>
     </nav>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="container mx-auto px-6 py-4 space-y-2">
@@ -84,5 +145,25 @@
       method: 'POST'
     });
     document.dispatchEvent(new Event('friend-added'));
+  });
+</script>
+
+<script>
+  // Toggle the dropdown
+  const btn  = document.getElementById('menu-button');
+  const menu = document.getElementById('menu');
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    menu.classList.toggle('hidden');
+    btn.setAttribute('aria-expanded', (!menu.classList.contains('hidden')).toString());
+  });
+
+  // Close on outside click
+  document.addEventListener('click', () => {
+    if (!menu.classList.contains('hidden')) {
+      menu.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+    }
   });
 </script>
