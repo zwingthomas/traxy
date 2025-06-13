@@ -289,13 +289,15 @@
       countEl.textContent = friends.length;
       listUL.innerHTML = friends.length
         ? friends.map(u => `
+          <a href="https://www.traxy.app/u/${u.username}" class="no-underline">
             <li class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
               <span class="inline-flex justify-center items-center h-8 w-8 rounded-full
-                          bg-blue-500 text-white uppercase text-sm">
+                          bg-blue-500 text-white uppercase text-sm no-underline">
                 ${u.username[0]}
               </span>
               <span class="text-gray-800">${u.username}</span>
-            </li>`).join('')
+            </li>
+          </a>`).join('')
         : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
     }
 
