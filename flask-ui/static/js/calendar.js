@@ -3,11 +3,6 @@ const apiFetch = window.apiFetch || ((path, opts) =>
   fetch((window.API_BASE_URL||'') + path, opts).then(res => res.json())
 );
 const isPublic = typeof window.PUBLIC_USERNAME !== "undefined";
-const TRACKERS_ENDPOINT = isPublic
-  // public profile
-  ? `/api/users/${window.PUBLIC_USERNAME}/trackers?visibility=public`
-  // your own dashboard
-  : "/api/trackers";
 
 /**
  * Display a little speech-bubble input above a cell.
@@ -115,17 +110,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderAll();
 });
 
-// renderAll async and fetch the real backend data
+// renderAll async and fetch the real backend data when the trackers are updated
 async function renderAll(){
-  let trackers;
-  try {
-    trackers = await apiFetch(TRACKERS_ENDPOINT);
-  } catch (e) {
-    console.error(`Failed to fetch "${TRACKERS_ENDPOINT}":`, e);
+  if (!isPublic) {
+    let trackers;
+    try {
+      trackers = await apiFetch("/api/trackers");
+    } catch (e) {
+      console.error(`Failed to fetch /api/trackers":`, e);
+      trackers = getInitialTrackers();
+    }
+    console.log("trackers from backend:", trackers);
+  }
+  else {
     trackers = getInitialTrackers();
   }
-  console.log("trackers from backend:", trackers);
-
   trackers.forEach(t => {
     const card = document.querySelector(`[data-tracker-id="${t.id}"]`);
     if (!card) return;

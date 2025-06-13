@@ -295,7 +295,7 @@ def update_tracker_proxy(tid):
 def public_profile(username):
     try:
         r = requests.get(
-            f"{API}/api/users/{username}/trackers?visibility=public"
+            f"{API}/api/trackers/{username}/trackers"
         )
         if r.status_code == 404:
             flash("User not found.", "warning")
@@ -316,10 +316,7 @@ def proxy_users_trackers(username):
     headers = {}
     if token:
         headers['Authorization'] = f"Bearer {token}"
-    # forward query string (e.g. ?visibility=public,friends)
-    qs = request.query_string.decode()
-    upstream = requests.get(f"{API}/api/users/{username}/trackers?{qs}",
-                            headers=headers)
+    upstream = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
     return (upstream.content, upstream.status_code,
             [('Content-Type', upstream.headers.get('Content-Type',''))])
 
