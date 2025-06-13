@@ -332,11 +332,13 @@ function renderCalendar(card) {
 
         // unified pointer events
         cell.addEventListener('pointerdown', e => {
+          if (e.target.closest('.input-popup')) return; // cannot do prevent default without not being able to use popup
           e.preventDefault();           // kill text-select / context menu
           downAt = Date.now();
         }, { passive: false });
 
         cell.addEventListener('pointerup', e => {
+          if (e.target.closest('.input-popup')) return; // cannot do prevent default without not being able to use popup
           e.preventDefault();
           const held = Date.now() - downAt;
           if (held >= 800) {
