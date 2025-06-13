@@ -34,7 +34,7 @@
     <!-- NAV BAR -->
     <nav class="bg-white shadow">
       <div class="container mx-auto px-4">
-        <div class="flex items-center">
+        <div class="flex items-center justify-between">
           
           <!-- Left group: Traxy + Dashboard (only if logged in) -->
           <div class="flex items-center space-x-4">
@@ -70,15 +70,18 @@
                  aria-labelledby="menu-button">
               
               {% if current_user %}
-                <div class="flex-1 flex justify-center">
-                  <input id="friend-search"
+                  <!-- <input id="friend-search"
                         placeholder="Find friends"
                         autocomplete="on"
                         class="focus:outline-none focus:ring focus:border-blue-300
                                 w-64 border border-gray-300 rounded px-3 py-1"/>
                   <ul id="friend-suggestions"
-                      class="absolute bg-white border hidden"></ul>
-                </div>
+                      class="absolute bg-white border hidden"></ul> -->
+                <button id="menu-find-friends"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem">
+                  Find friends
+                </button>
                 <a href="/logout"
                    class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                    role="menuitem">
@@ -120,70 +123,74 @@
       {% block content %}{% endblock %}
     </main>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+    <!-- Find Friends Overlay (hidden by default) -->
+    <div id="friend-modal"
+       class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6 relative">
+        <button id="modal-close"
+                class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl leading-none">
+          &times;
+        </button>
+        <h2 class="text-xl font-semibold mb-4">Find Friends</h2>
+        <input id="modal-search" … />
+        <ul id="modal-suggestions" …></ul>
+      </div>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // ─── Hamburger toggle ───────────────────────────────
+        const btn  = document.getElementById('menu-button');
+        const menu = document.getElementById('menu');
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          menu.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => menu.classList.add('hidden'));
+  
+        // ─── Find‐friends modal hooks ────────────────────────
+        const findBtn  = document.getElementById('menu-find-friends');
+        const modal    = document.getElementById('friend-modal');
+        const closeBtn = document.getElementById('modal-close');
+        const input    = document.getElementById('modal-search');
+        const list     = document.getElementById('modal-suggestions');
+  
+        findBtn?.addEventListener('click', e => {
+          e.stopPropagation();
+          menu.classList.add('hidden');
+          modal.classList.remove('hidden');
+          input.value = '';
+          list.innerHTML = '';
+          input.focus();
+        });
+  
+        closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', e => {
+          if (e.target === modal) modal.classList.add('hidden');
+        });
+  
+        // ─── Overlay search logic ───────────────────────────
+        input.addEventListener('input', async () => {
+          const q = input.value.trim();
+          if (!q) return list.replaceChildren();
+          const users = await window.apiFetch(
+            `/api/users/search?prefix=${encodeURIComponent(q)}`
+          );
+          list.innerHTML = users.map(u => `
+            <li class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                data-username="${u.username}">
+              ${u.username}
+            </li>
+          `).join('');
+        });
+  
+        list.addEventListener('click', e => {
+          const uname = e.target.dataset.username;
+          if (!uname) return;
+          window.location.href = `/u/${encodeURIComponent(uname)}`;
+        });
+      });
+    </script>
   </body>
 </html>
-
-<script>
-  const input = document.getElementById("friend-search");
-  const list  = document.getElementById("friend-suggestions");
-
-  input.addEventListener("input", async () => {
-    const prefix = input.value.trim();
-    if (!prefix) {
-      list.classList.add("hidden");
-      list.innerHTML = "";
-      return;
-    }
-
-    const users = await window.apiFetch(`/api/users/search?prefix=${encodeURIComponent(prefix)}`);
-
-    list.innerHTML = users
-      .map(u =>
-        `<li class="p-2 hover:bg-gray-100 cursor-pointer" data-name="${u.username}">
-           ${u.username}
-         </li>`
-      )
-      .join("");
-
-    list.classList.toggle("hidden", users.length === 0);
-  });
-
-  list.addEventListener("click", async e => {
-    const username = e.target.dataset.name;
-    if (!username) return;
-
-    await window.apiFetch(`/users/${encodeURIComponent(username)}/friends`, {
-      method: "POST"
-    });
-    alert(`Added ${username} as friend!`);
-    list.classList.add("hidden");
-    input.value = "";
-
-    await window.apiFetch(`/users/${encodeURIComponent(username)}/friends`, {
-      method: 'POST'
-    });
-    document.dispatchEvent(new Event('friend-added'));
-  });
-</script>
-
-<script>
-  // Toggle the dropdown
-  const btn  = document.getElementById('menu-button');
-  const menu = document.getElementById('menu');
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    menu.classList.toggle('hidden');
-    btn.setAttribute('aria-expanded', (!menu.classList.contains('hidden')).toString());
-  });
-
-  // Close on outside click
-  document.addEventListener('click', () => {
-    if (!menu.classList.contains('hidden')) {
-      menu.classList.add('hidden');
-      btn.setAttribute('aria-expanded', 'false');
-    }
-  });
-</script>
-
 
