@@ -179,7 +179,7 @@ function renderCalendar(card) {
   cal.className = 'calendar grid grid-cols-7 gap-1';
 
   days.forEach(dayData => {
-    // pull these out IMMEDIATELY
+    // pull these out immediately
     const date       = dayData.date;
     const total      = dayData.total;
     const isClickable = [today, yesterday, twoDaysAgo].includes(date);
@@ -194,8 +194,41 @@ function renderCalendar(card) {
     const ratio = target > 0 ? Math.min(total / target, 1) : 0;
     cell.style.backgroundColor = `rgba(${r},${g},${b},${ratio})`;
     cell.style.color           = ratio > 0.5 ? '#fff' : '#000';
-    cell.textContent           = total;
     
+    
+    //cell.textContent           = total;
+    // clear out any previous text
+    cell.textContent = '';
+
+    // build an SVG data-URI for the number
+    const size = 32;                         // match your cell size (h-12 → 3rem → 48px; adjust as needed)
+    const fontSize = 14;                     // tune for readability
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg"
+          width="${size}" height="${size}">
+        <text x="50%" y="50%"
+              fill="${cell.style.color}"
+              font-size="${fontSize}"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              font-family="sans-serif">
+          ${total}
+        </text>
+      </svg>`.trim();
+
+    // encode and stick it in an <img>
+    const uri = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    const img = document.createElement('img');
+    img.src = uri;
+
+    // prevent the <img> from swallowing your cell events
+    img.style.pointerEvents = 'none';
+
+    // center it if you like
+    img.classList.add('m-auto');
+
+    cell.appendChild(img);
+
     if (!isPublic) {
       if (isClickable) {
         cell.style.cursor = 'pointer';

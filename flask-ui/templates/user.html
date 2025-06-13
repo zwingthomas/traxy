@@ -46,7 +46,7 @@
           <h3 class="text-xl font-semibold mb-2">
             {{ t.name }}
           </h3>
-          <p class="text-sm mb-4 text-gray-600">
+          <p class="text-sm mb-4 text-gray-600 no-select">
             {% for period, count in t.rule.items() %}
               {{ count }}× {{ period.replace('_',' ') }}
             {% endfor %}
@@ -68,4 +68,25 @@
   {{ trackers | tojson | safe }}
 </script>
 <script src="/static/js/calendar.js"></script>
+
+<style>
+  .no-select {
+    -webkit-touch-callout: none !important;   /* no long-press menu */
+    -webkit-user-drag: none !important;       /* no drag start */
+    -webkit-user-select: none !important;     /* Safari/Chrome */
+    -moz-user-select: none !important;        /* Firefox */
+    -ms-user-select: none !important;         /* IE10+ */
+    user-select: none !important;             /* Standard */
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.no-select').forEach(el => {
+    // Prevent mouse/touch from ever starting text selection
+    el.addEventListener('mousedown',  e => e.preventDefault());
+    el.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    // Prevent the context menu (long-press) on iOS
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  });
+</script>
 {% endblock %}

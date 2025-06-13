@@ -148,9 +148,9 @@
         <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn">
           {{ t.name }}
         </h3>
-        <p class="text-sm mb-4 text-gray-600">
+        <p class="text-sm mb-4 text-gray-600 no-select">
           {% for period, count in t.rule.items() %}
-            {{ count }}× {{ period.replace('_',' ') }}
+            {{ count }}x {{ period.replace('_',' ') }}
           {% endfor %}
         </p>
         <div class="calendar grid grid-cols-7 gap-2"></div>
@@ -327,6 +327,27 @@
 
     /* Whenever another part of the UI adds a friend, dispatch: */
     document.addEventListener('friend-added', fetchFriends);
+  });
+</script>
+
+<style>
+  .no-select {
+    -webkit-touch-callout: none !important;   /* no long-press menu */
+    -webkit-user-drag: none !important;       /* no drag start */
+    -webkit-user-select: none !important;     /* Safari/Chrome */
+    -moz-user-select: none !important;        /* Firefox */
+    -ms-user-select: none !important;         /* IE10+ */
+    user-select: none !important;             /* Standard */
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.no-select').forEach(el => {
+    // Prevent mouse/touch from ever starting text selection
+    el.addEventListener('mousedown',  e => e.preventDefault());
+    el.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    // Prevent the context menu (long-press) on iOS
+    el.addEventListener('contextmenu', e => e.preventDefault());
   });
 </script>
 
