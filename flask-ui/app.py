@@ -294,9 +294,11 @@ def update_tracker_proxy(tid):
 @app.route('/u/<username>')
 def public_profile(username):
     try:
-        r = requests.get(
-            f"{API}/api/trackers/{username}/trackers"
-        )
+        token = session.get('token')
+        headers = {}
+        if token:
+            headers['Authorization'] = f"Bearer {token}"
+        r = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
         if r.status_code == 404:
             flash("User not found.", "warning")
             return redirect(url_for('index'))

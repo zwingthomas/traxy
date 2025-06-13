@@ -67,7 +67,7 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[mod
 def get_trackers_for_user(db: Session, user_id: int, visibility: List[str], current_user: Optional[models.User] = None) -> List[models.Tracker]:
     q = db.query(models.Tracker).filter(
         models.Tracker.user_id == user_id,
-        models.Tracker.visibility.in_(visibility)
+        func.lower(models.Tracker.visibility).in_(visibility)
     ).order_by(models.Tracker.position)
     return q.all()
 
@@ -214,12 +214,9 @@ def get_friends(db: Session, user_id: int) -> list[models.User]:
     u = db.get(models.User, user_id)
     return u.friends if u else []
 
-# Return True if `other_id` is in the friend‐list of `user_id`.
 def are_friends(db: Session, user_id: int, other_id: int) -> bool:
-    row = db.query(friendships).filter(
-        and_(
-            friendships.c.user_id   == user_id,
-            friendships.c.friend_id == other_id
-        )
-    ).first()
-    return row is not None
+    me    = db.get(models.User, user_id)
+    other = db.get(models.User, other_id)
+    if not me or not other:
+        return False
+    return other in me.friends

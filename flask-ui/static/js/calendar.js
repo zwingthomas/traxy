@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // renderAll async and fetch the real backend data when the trackers are updated
 async function renderAll(){
+  let trackers;
   if (!isPublic) {
-    let trackers;
     try {
       trackers = await apiFetch("/api/trackers");
     } catch (e) {
