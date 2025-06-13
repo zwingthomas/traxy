@@ -10,6 +10,25 @@
     <title>{% block title %}Activity Tracker{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
+    <style>
+      nav > .container > .flex {
+          align-items: baseline !important;
+        }
+    
+      .dashboard-link {
+        display: inline-block;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #4A5568;
+        padding: 0.50rem 0.75rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .dashboard-link:hover {
+        background-color: #EDF2F7;  /* gray-100 */
+        color: #2D3748;             /* gray-800 */
+      }
+    </style>
   </head>
   <body class="bg-gray-100">
     <!-- NAV BAR -->
@@ -22,24 +41,14 @@
             <a href="/" class="text-lg font-bold text-gray-800">Traxy</a>
             {% if current_user %}
               <a href="/dashboard"
-                 class="text-sm text-gray-600 hover:text-gray-800">
+                 class="dashboard-link">
                 Dashboard
               </a>
             {% endif %}
           </div>
     
           <!-- Center group: Find friends -->
-          <div class="flex-1 flex justify-center">
-            {% if current_user %}
-            <input id="friend-search"
-                   placeholder="Find friends"
-                   autocomplete="on"
-                   class="focus:outline-none focus:ring focus:border-blue-300
-                          w-64 border border-gray-300 rounded px-3 py-1"/>
-            <ul id="friend-suggestions"
-                class="absolute bg-white border hidden"></ul>
-            {% endif %}
-          </div>
+          
     
           <!-- Right group: Hamburger menu -->
           <div class="relative">
@@ -61,6 +70,15 @@
                  aria-labelledby="menu-button">
               
               {% if current_user %}
+                <div class="flex-1 flex justify-center">
+                  <input id="friend-search"
+                        placeholder="Find friends"
+                        autocomplete="on"
+                        class="focus:outline-none focus:ring focus:border-blue-300
+                                w-64 border border-gray-300 rounded px-3 py-1"/>
+                  <ul id="friend-suggestions"
+                      class="absolute bg-white border hidden"></ul>
+                </div>
                 <a href="/logout"
                    class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                    role="menuitem">
@@ -167,3 +185,5 @@
     }
   });
 </script>
+
+
