@@ -177,6 +177,7 @@ function renderCalendar(card) {
   const cal = card.querySelector('.calendar');
   cal.innerHTML = '';
   cal.className = 'calendar grid grid-cols-7 gap-1';
+  cal.addEventListener('selectionstart', e => e.preventDefault());
 
   days.forEach(dayData => {
     // pull these out immediately
@@ -186,7 +187,7 @@ function renderCalendar(card) {
   
     // build the cell
     const cell = document.createElement('div');
-    cell.className = 'relative w-12 h-12 rounded border flex items-center justify-center text-sm';
+    cell.className = 'relative w-12 h-12 rounded border flex items-center justify-center text-sm select-none';
     cell.dataset.date  = date;
     cell.dataset.value = total;
     
@@ -200,34 +201,36 @@ function renderCalendar(card) {
     // clear out any previous text
     cell.textContent = '';
 
-    // build an SVG data-URI for the number
-    const size = 32;                         // match your cell size (h-12 → 3rem → 48px; adjust as needed)
-    const fontSize = 14;                     // tune for readability
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg"
-          width="${size}" height="${size}">
-        <text x="50%" y="50%"
-              fill="${cell.style.color}"
-              font-size="${fontSize}"
-              text-anchor="middle"
-              dominant-baseline="middle"
-              font-family="sans-serif">
-          ${total}
-        </text>
-      </svg>`.trim();
+    if (widgetType !== 'boolean') {
+      // build an SVG data-URI for the number
+      const size = 32;
+      const fontSize = 14;
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+            width="${size}" height="${size}">
+          <text x="50%" y="50%"
+                fill="${cell.style.color}"
+                font-size="${fontSize}"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                font-family="sans-serif">
+            ${total}
+          </text>
+        </svg>`.trim();
 
-    // encode and stick it in an <img>
-    const uri = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-    const img = document.createElement('img');
-    img.src = uri;
+      // encode and stick it in an <img>
+      const uri = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+      const img = document.createElement('img');
+      img.src = uri;
 
-    // prevent the <img> from swallowing your cell events
-    img.style.pointerEvents = 'none';
+      // prevent the <img> from swallowing your cell events
+      img.style.pointerEvents = 'none';
 
-    // center it if you like
-    img.classList.add('m-auto');
+      // center it if you like
+      img.classList.add('m-auto');
 
-    cell.appendChild(img);
+      cell.appendChild(img);
+    }
 
     if (!isPublic) {
       if (isClickable) {
@@ -236,7 +239,7 @@ function renderCalendar(card) {
         let   pressTimer;
         
         // click to record / toggle
-        cell.addEventListener('click', async () => {
+        async function increment() {
           let payload;
           if (widgetType === 'boolean') {
             const current = Number(cell.dataset.value) || 0;
@@ -314,24 +317,38 @@ function renderCalendar(card) {
             return;
           }
           await renderAll();
-        });
+        };
+
+        async function reset() {
+          const res = await fetch(
+            `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
+            { method: 'DELETE', credentials: 'include' }
+          );
+          if (!res.ok) return alert("Could not reset this day's total");
+          await renderAll();
+        }
         
-        // long-press to reset
-        cell.addEventListener('mousedown', () => {
-          pressTimer = setTimeout(async () => {
-            const res = await fetch(
-              `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
-              { method: 'DELETE', credentials: 'include' }
-            );
-            if (!res.ok) {
-              return alert("Could not reset this day's total");
-            }
-            await renderAll();
-          }, 800);
+        let downAt = 0;
+
+        // unified pointer events
+        cell.addEventListener('pointerdown', e => {
+          e.preventDefault();           // kill text-select / context menu
+          downAt = Date.now();
+        }, { passive: false });
+
+        cell.addEventListener('pointerup', e => {
+          e.preventDefault();
+          const held = Date.now() - downAt;
+          if (held >= 800) {
+            reset();
+          } else {
+            increment();
+          }
         });
-        ['mouseup','mouseleave'].forEach(evt =>
-          cell.addEventListener(evt, () => clearTimeout(pressTimer))
-        );
+
+        cell.addEventListener('pointercancel', e => {
+          e.preventDefault();
+        });
       }
     }
     cal.appendChild(cell);
