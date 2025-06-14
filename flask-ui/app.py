@@ -397,6 +397,17 @@ def proxy_add_friend(username):
                       headers={"Authorization": f"Bearer {token}"})
     return (r.text, r.status_code, r.headers.items())
 
+@app.route("/users/<username>/friends", methods=["DELETE"])
+def proxy_delete_friend(username):
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+    r = requests.delete(
+        f"{API}/api/users/{username}/friends?username={request.args.get('username')}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    return (r.text, r.status_code, r.headers.items())
+
 @app.context_processor
 def inject_current_user():
     token = session.get('token')

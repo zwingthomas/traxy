@@ -124,3 +124,14 @@ def add_friend(
 ):
     crud.add_friend(db, current.id, username)
     return {"added": username}
+
+@router.delete("/{username}/friends")
+def delete_friend(
+    username: str,
+    username_to_remove: str = Query(..., alias="username"),
+    db: Session = Depends(deps.get_db),
+    current = Depends(deps.get_current_user),
+):
+    # current.username is “you”
+    crud.remove_friend(db, current.id, username_to_remove)
+    return {"removed": username_to_remove}

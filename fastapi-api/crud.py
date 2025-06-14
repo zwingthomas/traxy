@@ -220,3 +220,15 @@ def are_friends(db: Session, user_id: int, other_id: int) -> bool:
     if not me or not other:
         return False
     return other in me.friends
+
+def remove_friend(db: Session, user_id: int, friend_username: str) -> None:
+    me     = db.get(models.User, user_id)
+    friend = get_user_by_username(db, friend_username)
+    if not friend or me.id == friend.id:
+        raise HTTPException(404, "User not found")
+    # remove both sides
+    if friend in me.friends:
+        me.friends.remove(friend)
+    if me in friend.friends:
+        friend.friends.remove(me)
+    db.commit()

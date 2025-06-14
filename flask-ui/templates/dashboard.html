@@ -168,14 +168,48 @@
               p-6 flex flex-col scale-90 opacity-0
               transition duration-200 ease-out"
        id="friends-panel">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold">Friends</h3>
-      <button id="friends-close"
-              class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
-    </div>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Friends</h3>
+        <!-- old: <button id="friends-close">×</button> -->
+        <button id="mode-toggle"
+                class="p-2 text-gray-500 hover:text-gray-800"
+                aria-label="Toggle delete mode">
+          <svg id="mode-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <!-- Pencil icon path -->
+            <path d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"/>
+          </svg>
+        </button>
+      </div>
     <ul id="friends-list" class="space-y-3 overflow-y-auto pr-1 flex-1"></ul>
   </div>
 </div>
+
+<style>
+  /* highlight trash when you can drop */
+  #mode-toggle.trash-over svg {
+    color: #dc2626; /* red-600 */
+  }
+  /* show a grab cursor in delete mode */
+  #friends-list.deletion-mode li {
+    cursor: grab;
+  }
+
+  /* highlight the item while you’re dragging it in delete‐mode */
+  #friends-list.deletion-mode li.dragging {
+    opacity: 0.6;
+    transform: scale(0.98);
+    border: 1px dashed #f87171; /* red-400 */
+  }
+  /* make the drop target (trash) pulse while dragging over it */
+  #mode-toggle.trash-over {
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.1); }
+  }
+</style>
 
 <script>
   // Show/Hide “Create/Edit” modal
@@ -257,11 +291,131 @@
     const overlay = document.getElementById('friends-overlay');
     const panel   = document.getElementById('friends-panel');
     const listUL  = document.getElementById('friends-list');
-    const closeBt = document.getElementById('friends-close');
+    const modeBtn   = document.getElementById('mode-toggle');
+    const modeIcon  = document.getElementById('mode-icon');
     const countEl = document.getElementById('friend-count');
 
     /* `me` as real JS object */
     const me = JSON.parse('{{ user | tojson | safe }}');
+
+    // Open overlay
+    async function open(){
+      try{
+        await fetchFriends();
+        overlay.classList.remove('hidden');
+        // Tailwind-only “pop-in” without @keyframes
+        requestAnimationFrame(()=>panel.classList.remove('scale-90','opacity-0'));
+      }catch(err){
+        console.error('[friends-overlay] fetch failed',err);
+        alert('Could not fetch friends');
+      }
+    }
+    // Close overlay
+    function close(){
+      panel.classList.add('scale-90','opacity-0');
+      setTimeout(()=>overlay.classList.add('hidden'), 200);
+    }
+
+    // open/close the friends overlay
+    badge.addEventListener('click', open);
+    overlay.addEventListener('click', e => {
+      // only clicks on the backdrop itself should close
+      if (e.target === overlay) close();
+    });
+
+    let deletionMode = false;
+
+    // 1) Toggle pencil and trash
+    function updateModeUI() {
+      deletionMode = !!deletionMode;
+      if (deletionMode) {
+        // switch to trash icon
+        modeIcon.setAttribute('viewBox','0 0 20 20');
+        modeIcon.innerHTML = `
+          <!-- trash icon -->
+          <path fill-rule="evenodd"
+                d="M6 2a1 1 0 00-1 1v1H3a1 1 0 000 2h14a1 1 0 000-2h-2V3a1 1 0 00-1-1H6zM4 7v9a2 2 0 002 2h8a2 2 0 002-2V7H4z"
+                clip-rule="evenodd"/>`;
+        listUL.classList.add('deletion-mode');
+      } else {
+        // switch to pencil icon
+        modeIcon.setAttribute('viewBox','0 0 20 20');
+        modeIcon.innerHTML = `
+          <path d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1
+            0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"/>`;
+        listUL.classList.remove('deletion-mode');
+        listUL.querySelectorAll('li.dragging').forEach(li => 
+          li.classList.remove('dragging')
+        );
+      }
+
+      // enable/disable dragging on list items
+      listUL.querySelectorAll('li').forEach(li => {
+        li.draggable = deletionMode;
+      });
+    }
+
+    modeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      deletionMode = !deletionMode;
+      updateModeUI();
+    });
+
+    // 2) Drag‐and‐drop handlers
+    //   a) start a drag when deletionMode is on
+    listUL.addEventListener('dragstart', e => {
+      if (!deletionMode) return;
+      const li = e.target.closest('li');
+      if (!li) return;
+      li.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', li.dataset.username);
+    });
+    listUL.addEventListener('dragend', e => {
+      // remove the class from whatever you were dragging
+      const li = e.target.closest('li');
+      if (li) li.classList.remove('dragging');
+    });
+
+    //   b) highlight trash on dragover
+    modeBtn.addEventListener('dragover', e => {
+      if (!deletionMode) return;
+      e.preventDefault();
+      modeBtn.classList.add('trash-over');
+    });
+    modeBtn.addEventListener('dragleave', e => {
+      modeBtn.classList.remove('trash-over');
+    });
+
+    //   c) handle the drop -> call DELETE, then refresh
+    modeBtn.addEventListener('drop', async e => {
+      if (!deletionMode) return;
+      e.preventDefault();
+      modeBtn.classList.remove('trash-over');
+
+      const friendToRemove = e.dataTransfer.getData('text/plain');
+      try {
+        const res = await fetch(
+          `/users/${encodeURIComponent(me.username)}/friends?username=` +
+            encodeURIComponent(friendToRemove),
+          {
+            method: 'DELETE',
+            credentials: 'include'
+          }
+        );
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        
+        // re-fetch & rerender
+        const friends = await fetchFriends();
+        renderBadge(friends.length);
+      } catch (err) {
+        console.error('Remove friend failed:', err);
+        alert('Could not remove friend');
+      }
+
+      // automatically exit deletion mode
+      deletionMode = false;
+      updateModeUI();
+    });
 
     /** Fetch friends from backend */
     async function fetchFriends(){
@@ -292,41 +446,16 @@
       countEl.textContent = friends.length;
       listUL.innerHTML = friends.length
         ? friends.map(u => `
-          <a href="/u/${u.username}" class="no-underline">
-            <li class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-              <span class="inline-flex justify-center items-center h-8 w-8 rounded-full
-                          bg-blue-500 text-white uppercase text-sm no-underline">
-                ${u.username[0]}
-              </span>
-              <span class="text-gray-800">${u.username}</span>
+            <li data-username="${u.username}"
+                class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
+              <a href="/u/${u.username}" class="no-underline flex items-center gap-3">
+                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${u.username[0]}</span>
+                <span class="text-gray-800">${u.username}</span>
+              </a>
             </li>
-          </a>`).join('')
+          `).join('')
         : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
     }
-
-    /** Open overlay */
-    async function open(){
-      try{
-        await fetchFriends();
-        overlay.classList.remove('hidden');
-        // Tailwind-only “pop-in” without @keyframes
-        requestAnimationFrame(()=>panel.classList.remove('scale-90','opacity-0'));
-      }catch(err){
-        console.error('[friends-overlay] fetch failed',err);
-        alert('Could not fetch friends');
-      }
-    }
-
-    /** Close overlay */
-    function close(){
-      panel.classList.add('scale-90','opacity-0');
-      setTimeout(()=>overlay.classList.add('hidden'),200);
-    }
-
-    badge.addEventListener('click', open);
-    overlay.addEventListener('click', e=>{
-      if(e.target===overlay||e.target===closeBt) close();
-    });
 
     /* Whenever another part of the UI adds a friend, dispatch: */
     document.addEventListener('friend-added', fetchFriends);

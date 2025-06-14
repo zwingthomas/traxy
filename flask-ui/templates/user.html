@@ -149,7 +149,7 @@
             { method: 'POST', credentials: 'include'}
           );
           if (!res.ok) {
-            const text = await res.text();
+            const text = await res.text;
             throw new Error(`HTTP ${res.status}: ${text}`);
           };
 
