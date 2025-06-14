@@ -366,7 +366,7 @@ def proxy_user_search():
 def proxy_read_friends(username: str):
     token   = session.get("token")         # may be None for anonymous
     headers = {
-        "Accept-Encoding": "identity",        # 👈︎ ask for *no* compression
+        "Accept-Encoding": "identity",
         **({"Authorization": f"Bearer {token}"} if token else {})
     }
 
