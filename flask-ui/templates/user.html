@@ -6,11 +6,13 @@
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
     {{ username }}’s Trackers
     {% if current_user %}
-      {% if are_friends %}
+        
+        <!-- Show if they are friends -->
         <span id="friend-badge"
               class="inline-flex items-center gap-1 px-3 py-1 rounded-full
                     text-sm font-medium bg-blue-100 text-blue-700
-                    hover:bg-blue-200 transition cursor-pointer">
+                    hover:bg-blue-200 transition cursor-pointer
+                    {% if not are_friends %}hidden{% endif %}">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <!-- head -->
             <path d="M10 10a4 4 0 100-8 4 4 0 000 8z" />
@@ -20,12 +22,14 @@
           <span id="friend-count">{{ friends|length }}</span>
           <span id="friend-label">friends</span>&nbsp;
         </span>
-      {% else %}
+
+        <!-- Show if they are not yet friends -->
         <!-- add friend badge -->
         <span id="add-friend-badge"
               class="inline-flex items-center gap-1 px-3 py-1 rounded-full
                     text-sm font-medium bg-blue-50 text-blue-600
-                    hover:bg-blue-100 transition cursor-pointer">
+                    hover:bg-blue-100 transition cursor-pointer
+                    {% if are_friends %}hidden{% endif %}">
           <!-- plus icon -->
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd"
@@ -34,7 +38,6 @@
           </svg>
           <span>Add Friend</span>
         </span>
-      {% endif %}
     {% endif %}
   </h2>
 
@@ -136,51 +139,18 @@
   document.addEventListener('DOMContentLoaded', () => {
     /** Elements */
     const badge = document.getElementById('friend-badge');
-    if (!badge) {
-      const addBtn = document.getElementById('add-friend-badge');
-      if (!addBtn) return;
-      const username = "{{ username|e }}";
+    const addBtn = document.getElementById('add-friend-badge');
+    
+    /* user's username */
+    const username = "{{ username|e }}";
 
-      addBtn?.addEventListener('click', async () => {
-        try {
-          // call your Flask proxy
-          const res = await window.apiFetch(
-            `/users/${encodeURIComponent(username)}/friends`,
-            { method: 'POST', credentials: 'include'}
-          );
-          if (!res.ok) {
-            const text = await res.text;
-            throw new Error(`HTTP ${res.status}: ${text}`);
-          };
-
-          // dispatch to update the friends-overlay list
-          document.dispatchEvent(new Event('friend-added'));
-
-          // swap badges: hide add, show count
-          addBtn.classList.add('hidden');
-          friendBtn?.classList.remove('hidden');
-
-          // optionally refresh the count
-          const friends = await window.apiFetch(
-            `/users/${encodeURIComponent(username)}/friends`
-          );
-          const countEl = document.getElementById('friend-count');
-          countEl.textContent = friends.length;
-        } catch (err) {
-          console.error('Add friend failed:', err);
-          alert('Could not add friend');
-        }
-      });
-    }
-    else {
+    // If they are friends
+    if (badge) {
       const overlay = document.getElementById('friends-overlay');
       const panel   = document.getElementById('friends-panel');
       const listUL  = document.getElementById('friends-list');
       const closeBt = document.getElementById('friends-close');
       const countEl = document.getElementById('friend-count');
-
-      /* user's username */
-      const username = "{{ username|e }}";
 
       /** Fetch friends from backend */
       async function fetchFriends(){
@@ -250,6 +220,37 @@
       /* Whenever another part of the UI adds a friend, dispatch: */
       document.addEventListener('friend-added', fetchFriends);
     }
+
+    // If they're not yet friends
+    if (addBtn) {
+      addBtn?.addEventListener('click', async () => {
+        try {
+          // call your Flask proxy
+          const res = await window.apiFetch(
+            `/api/users/${encodeURIComponent(username)}/friends`,
+            { method: 'POST', credentials: 'include'}
+          );
+
+          // dispatch to update the friends-overlay list
+          document.dispatchEvent(new Event('friend-added'));
+
+          // swap badges: hide add, show count
+          addBtn.classList.add('hidden');
+          badge?.classList.remove('hidden');
+
+          // optionally refresh the count
+          const friends = await window.apiFetch(
+            `/api/users/${encodeURIComponent(username)}/friends`
+          );
+          const countEl = document.getElementById('friend-count');
+          countEl.textContent = friends.length;
+        } catch (err) {
+          console.error('Add friend failed:', err);
+          alert('Could not add friend');
+        }
+      });
+    }
+    
   });
   
 </script>

@@ -395,7 +395,7 @@
       const friendToRemove = e.dataTransfer.getData('text/plain');
       try {
         const res = await fetch(
-          `/users/${encodeURIComponent(me.username)}/friends?username=` +
+          `/api/users/${encodeURIComponent(me.username)}/friends?username=` +
             encodeURIComponent(friendToRemove),
           {
             method: 'DELETE',

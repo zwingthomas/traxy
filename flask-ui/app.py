@@ -387,7 +387,7 @@ def proxy_read_friends(username: str):
     return r.content, r.status_code, clean_headers
 
 
-@app.route("/users/<username>/friends", methods=["POST"])
+@app.route("/api/users/<username>/friends", methods=["POST"])
 def proxy_add_friend(username):
     token = session.get("token")
     if not token:
@@ -397,7 +397,7 @@ def proxy_add_friend(username):
                       headers={"Authorization": f"Bearer {token}"})
     return (r.text, r.status_code, r.headers.items())
 
-@app.route("/users/<username>/friends", methods=["DELETE"])
+@app.route("/api/users/<username>/friends", methods=["DELETE"])
 def proxy_delete_friend(username):
     token = session.get("token")
     if not token:
