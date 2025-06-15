@@ -5,6 +5,40 @@
 <div class="container mx-auto px-6 py-8">
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
     {{ username }}’s Trackers
+    {% if current_user %}
+        
+        <!-- Show if they are friends -->
+        <span id="friend-badge"
+              class="inline-flex items-center gap-1 px-3 py-1 rounded-full
+                    text-sm font-medium bg-blue-100 text-blue-700
+                    hover:bg-blue-200 transition cursor-pointer
+                    {% if not are_friends %}hidden{% endif %}">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <!-- head -->
+            <path d="M10 10a4 4 0 100-8 4 4 0 000 8z" />
+            <!-- shoulders/body -->
+            <path fill-rule="evenodd" d="M4 18a6 6 0 0112 0H4z" clip-rule="evenodd" />
+          </svg>
+          <span id="friend-count">{{ friends|length }}</span>
+          <span id="friend-label">friends</span>&nbsp;
+        </span>
+
+        <!-- Show if they are not yet friends -->
+        <!-- add friend badge -->
+        <span id="add-friend-badge"
+              class="inline-flex items-center gap-1 px-3 py-1 rounded-full
+                    text-sm font-medium bg-blue-50 text-blue-600
+                    hover:bg-blue-100 transition cursor-pointer
+                    {% if are_friends %}hidden{% endif %}">
+          <!-- plus icon -->
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+                  d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                  clip-rule="evenodd"/>
+          </svg>
+          <span>Add Friend</span>
+        </span>
+    {% endif %}
   </h2>
 
   <!-- View‐Range Controls -->
@@ -42,7 +76,7 @@
           <h3 class="text-xl font-semibold mb-2">
             {{ t.name }}
           </h3>
-          <p class="text-sm mb-4 text-gray-600">
+          <p class="text-sm mb-4 text-gray-600 no-select">
             {% for period, count in t.rule.items() %}
               {{ count }}× {{ period.replace('_',' ') }}
             {% endfor %}
@@ -56,9 +90,168 @@
   {% endif %}
 </div>
 
+<div id="friends-overlay"
+     class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+  <div class="bg-white w-80 max-w-[92vw] max-h-[80vh] rounded-xl shadow-xl
+              p-6 flex flex-col scale-90 opacity-0
+              transition duration-200 ease-out"
+       id="friends-panel">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Friends</h3>
+      <button id="friends-close"
+              class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+    </div>
+    <ul id="friends-list" class="space-y-3 overflow-y-auto pr-1 flex-1"></ul>
+  </div>
+</div>
+
 <script>
   // signal to calendar.js that we're on a public profile
   window.PUBLIC_USERNAME = "{{ username|e }}";
 </script>
+<script id="initial-trackers" type="application/json">
+  {{ trackers | tojson | safe }}
+</script>
 <script src="/static/js/calendar.js"></script>
+
+<style>
+  .no-select {
+    -webkit-touch-callout: none !important;   /* no long-press menu */
+    -webkit-user-drag: none !important;       /* no drag start */
+    -webkit-user-select: none !important;     /* Safari/Chrome */
+    -moz-user-select: none !important;        /* Firefox */
+    -ms-user-select: none !important;         /* IE10+ */
+    user-select: none !important;             /* Standard */
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.no-select').forEach(el => {
+    // Prevent mouse/touch from ever starting text selection
+    el.addEventListener('mousedown',  e => e.preventDefault());
+    el.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    // Prevent the context menu (long-press) on iOS
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    /** Elements */
+    const badge = document.getElementById('friend-badge');
+    const addBtn = document.getElementById('add-friend-badge');
+    
+    /* user's username */
+    const username = "{{ username|e }}";
+
+    // If they are friends
+    if (badge) {
+      const overlay = document.getElementById('friends-overlay');
+      const panel   = document.getElementById('friends-panel');
+      const listUL  = document.getElementById('friends-list');
+      const closeBt = document.getElementById('friends-close');
+      const countEl = document.getElementById('friend-count');
+
+      /** Fetch friends from backend */
+      async function fetchFriends(){
+        const friends = await window.apiFetch(
+          `/api/users/${encodeURIComponent(username)}/friends`
+        );
+        renderList(friends);
+        return friends;
+      }
+
+      function renderBadge(count) {
+        countEl.textContent = count;
+        document.getElementById('friend-label').textContent =`friend${count === 1 ? '' : 's'}`;
+      }
+
+      // Initial load
+      (async () => {
+        try {
+          const friends = await fetchFriends();
+          renderBadge(friends.length);
+        } catch (e) {
+          console.error('Friend fetch failed:', e);
+        }
+      })();
+
+      /** Replace badge + list */
+      function renderList(friends){
+        countEl.textContent = friends.length;
+        listUL.innerHTML = friends.length
+          ? friends.map(u => `
+            <a href="/u/${u.username}" class="no-underline">
+              <li class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
+                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full
+                            bg-blue-500 text-white uppercase text-sm no-underline">
+                  ${u.username[0]}
+                </span>
+                <span class="text-gray-800">${u.username}</span>
+              </li>
+            </a>`).join('')
+          : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
+      }
+
+      /** Open overlay */
+      async function open(){
+        try{
+          await fetchFriends();
+          overlay.classList.remove('hidden');
+          // Tailwind-only “pop-in” without @keyframes
+          requestAnimationFrame(()=>panel.classList.remove('scale-90','opacity-0'));
+        }catch(err){
+          console.error('[friends-overlay] fetch failed',err);
+          alert('Could not fetch friends');
+        }
+      }
+
+      /** Close overlay */
+      function close(){
+        panel.classList.add('scale-90','opacity-0');
+        setTimeout(()=>overlay.classList.add('hidden'),200);
+      }
+
+      badge.addEventListener('click', open);
+      overlay.addEventListener('click', e=>{
+        if(e.target===overlay||e.target===closeBt) close();
+      });
+
+      /* Whenever another part of the UI adds a friend, dispatch: */
+      document.addEventListener('friend-added', fetchFriends);
+    }
+
+    // If they're not yet friends
+    if (addBtn) {
+      addBtn?.addEventListener('click', async () => {
+        try {
+          // call your Flask proxy
+          const res = await window.apiFetch(
+            `/api/users/${encodeURIComponent(username)}/friends`,
+            { method: 'POST', credentials: 'include'}
+          );
+
+          // dispatch to update the friends-overlay list
+          document.dispatchEvent(new Event('friend-added'));
+
+          // swap badges: hide add, show count
+          addBtn.classList.add('hidden');
+          badge?.classList.remove('hidden');
+
+          // optionally refresh the count
+          const friends = await window.apiFetch(
+            `/api/users/${encodeURIComponent(username)}/friends`
+          );
+          const countEl = document.getElementById('friend-count');
+          countEl.textContent = friends.length;
+        } catch (err) {
+          console.error('Add friend failed:', err);
+          alert('Could not add friend');
+        }
+      });
+    }
+    
+  });
+  
+</script>
 {% endblock %}

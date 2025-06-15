@@ -16,6 +16,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    usernameLower = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     timezone = Column(String)
 
@@ -23,9 +24,9 @@ class User(Base):
     friends = relationship(
         'User',
         secondary=friendships,
+        back_populates="friends",
         primaryjoin=(friendships.c.user_id == id),
         secondaryjoin=(friendships.c.friend_id == id),
-        backref='friended_by'
     )
 
 class Tracker(Base):

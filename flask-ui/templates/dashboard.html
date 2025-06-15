@@ -5,7 +5,23 @@
 <div class="container mx-auto px-6 py-8">
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
     Hello, {{ user.username }}!
+    <span id="friend-badge"
+          class="inline-flex items-center gap-1 px-3 py-1 rounded-full
+                text-sm font-medium bg-blue-100 text-blue-700
+                hover:bg-blue-200 transition cursor-pointer">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <!-- head -->
+        <path d="M10 10a4 4 0 100-8 4 4 0 000 8z" />
+        <!-- shoulders/body -->
+        <path fill-rule="evenodd" d="M4 18a6 6 0 0112 0H4z" clip-rule="evenodd" />
+      </svg>
+      <span id="friend-count">{{ friends|length }}</span>
+      <span id="friend-label">friends</span>&nbsp;
+    </span>
   </h2>
+
+ 
+  
   <div class="flex items-center space-x-4 mb-6">
     <button id="new-tracker-btn"
       class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
@@ -135,9 +151,9 @@
         <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn">
           {{ t.name }}
         </h3>
-        <p class="text-sm mb-4 text-gray-600">
+        <p class="text-sm mb-4 text-gray-600 no-select">
           {% for period, count in t.rule.items() %}
-            {{ count }}× {{ period.replace('_',' ') }}
+            {{ count }}x {{ period.replace('_',' ') }}
           {% endfor %}
         </p>
         <div class="calendar grid grid-cols-7 gap-2"></div>
@@ -145,6 +161,55 @@
     {% endfor %}
   </div>
 </div>
+
+<div id="friends-overlay"
+     class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+  <div class="bg-white w-80 max-w-[92vw] max-h-[80vh] rounded-xl shadow-xl
+              p-6 flex flex-col scale-90 opacity-0
+              transition duration-200 ease-out"
+       id="friends-panel">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">Friends</h3>
+        <!-- old: <button id="friends-close">×</button> -->
+        <button id="mode-toggle"
+                class="p-2 text-gray-500 hover:text-gray-800"
+                aria-label="Toggle delete mode">
+          <svg id="mode-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <!-- Pencil icon path -->
+            <path d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"/>
+          </svg>
+        </button>
+      </div>
+    <ul id="friends-list" class="space-y-3 overflow-y-auto pr-1 flex-1"></ul>
+  </div>
+</div>
+
+<style>
+  /* highlight trash when you can drop */
+  #mode-toggle.trash-over svg {
+    color: #dc2626; /* red-600 */
+  }
+  /* show a grab cursor in delete mode */
+  #friends-list.deletion-mode li {
+    cursor: grab;
+  }
+
+  /* highlight the item while you’re dragging it in delete‐mode */
+  #friends-list.deletion-mode li.dragging {
+    opacity: 0.6;
+    transform: scale(0.98);
+    border: 1px dashed #f87171; /* red-400 */
+  }
+  /* make the drop target (trash) pulse while dragging over it */
+  #mode-toggle.trash-over {
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.1); }
+  }
+</style>
 
 <script>
   // Show/Hide “Create/Edit” modal
@@ -190,7 +255,6 @@
   {{ trackers | tojson | safe }}
 </script>
 <script src="/static/js/calendar.js"></script>
-<script src="/static/js/auth.js"></script>
 <script src="/static/js/edit-tracker.js"></script>
 
 <!--  Load SortableJS from CDN -->
@@ -219,4 +283,204 @@
     });
   });
 </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    /** Elements */
+    const badge   = document.getElementById('friend-badge');
+    const overlay = document.getElementById('friends-overlay');
+    const panel   = document.getElementById('friends-panel');
+    const listUL  = document.getElementById('friends-list');
+    const modeBtn   = document.getElementById('mode-toggle');
+    const modeIcon  = document.getElementById('mode-icon');
+    const countEl = document.getElementById('friend-count');
+
+    /* `me` as real JS object */
+    const me = JSON.parse('{{ user | tojson | safe }}');
+
+    // Open overlay
+    async function open(){
+      try{
+        await fetchFriends();
+        overlay.classList.remove('hidden');
+        // Tailwind-only “pop-in” without @keyframes
+        requestAnimationFrame(()=>panel.classList.remove('scale-90','opacity-0'));
+      }catch(err){
+        console.error('[friends-overlay] fetch failed',err);
+        alert('Could not fetch friends');
+      }
+    }
+    // Close overlay
+    function close(){
+      panel.classList.add('scale-90','opacity-0');
+      setTimeout(()=>overlay.classList.add('hidden'), 200);
+    }
+
+    // open/close the friends overlay
+    badge.addEventListener('click', open);
+    overlay.addEventListener('click', e => {
+      // only clicks on the backdrop itself should close
+      if (e.target === overlay) close();
+    });
+
+    let deletionMode = false;
+
+    // 1) Toggle pencil and trash
+    function updateModeUI() {
+      deletionMode = !!deletionMode;
+      if (deletionMode) {
+        // switch to trash icon
+        modeIcon.setAttribute('viewBox','0 0 20 20');
+        modeIcon.innerHTML = `
+          <!-- trash icon -->
+          <path fill-rule="evenodd"
+                d="M6 2a1 1 0 00-1 1v1H3a1 1 0 000 2h14a1 1 0 000-2h-2V3a1 1 0 00-1-1H6zM4 7v9a2 2 0 002 2h8a2 2 0 002-2V7H4z"
+                clip-rule="evenodd"/>`;
+        listUL.classList.add('deletion-mode');
+      } else {
+        // switch to pencil icon
+        modeIcon.setAttribute('viewBox','0 0 20 20');
+        modeIcon.innerHTML = `
+          <path d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1
+            0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"/>`;
+        listUL.classList.remove('deletion-mode');
+        listUL.querySelectorAll('li.dragging').forEach(li => 
+          li.classList.remove('dragging')
+        );
+      }
+
+      // enable/disable dragging on list items
+      listUL.querySelectorAll('li').forEach(li => {
+        li.draggable = deletionMode;
+      });
+    }
+
+    modeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      deletionMode = !deletionMode;
+      updateModeUI();
+    });
+
+    // 2) Drag‐and‐drop handlers
+    //   a) start a drag when deletionMode is on
+    listUL.addEventListener('dragstart', e => {
+      if (!deletionMode) return;
+      const li = e.target.closest('li');
+      if (!li) return;
+      li.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', li.dataset.username);
+    });
+    listUL.addEventListener('dragend', e => {
+      // remove the class from whatever you were dragging
+      const li = e.target.closest('li');
+      if (li) li.classList.remove('dragging');
+    });
+
+    //   b) highlight trash on dragover
+    modeBtn.addEventListener('dragover', e => {
+      if (!deletionMode) return;
+      e.preventDefault();
+      modeBtn.classList.add('trash-over');
+    });
+    modeBtn.addEventListener('dragleave', e => {
+      modeBtn.classList.remove('trash-over');
+    });
+
+    //   c) handle the drop -> call DELETE, then refresh
+    modeBtn.addEventListener('drop', async e => {
+      if (!deletionMode) return;
+      e.preventDefault();
+      modeBtn.classList.remove('trash-over');
+
+      const friendToRemove = e.dataTransfer.getData('text/plain');
+      try {
+        const res = await fetch(
+          `/api/users/${encodeURIComponent(me.username)}/friends?username=` +
+            encodeURIComponent(friendToRemove),
+          {
+            method: 'DELETE',
+            credentials: 'include'
+          }
+        );
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        
+        // re-fetch & rerender
+        const friends = await fetchFriends();
+        renderBadge(friends.length);
+      } catch (err) {
+        console.error('Remove friend failed:', err);
+        alert('Could not remove friend');
+      }
+
+      // automatically exit deletion mode
+      deletionMode = false;
+      updateModeUI();
+    });
+
+    /** Fetch friends from backend */
+    async function fetchFriends(){
+      const friends = await window.apiFetch(
+        `/api/users/${encodeURIComponent(me.username)}/friends`
+      );
+      renderList(friends);
+      return friends;
+    }
+
+    function renderBadge(count) {
+      countEl.textContent = count;
+      document.getElementById('friend-label').textContent =`friend${count === 1 ? '' : 's'}`;
+    }
+
+    // Initial load
+    (async () => {
+      try {
+        const friends = await fetchFriends();
+        renderBadge(friends.length);
+      } catch (e) {
+        console.error('Friend fetch failed:', e);
+      }
+    })();
+
+    /** Replace badge + list */
+    function renderList(friends){
+      countEl.textContent = friends.length;
+      listUL.innerHTML = friends.length
+        ? friends.map(u => `
+            <li data-username="${u.username}"
+                class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
+              <a href="/u/${u.username}" class="no-underline flex items-center gap-3">
+                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${u.username[0]}</span>
+                <span class="text-gray-800">${u.username}</span>
+              </a>
+            </li>
+          `).join('')
+        : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
+    }
+
+    /* Whenever another part of the UI adds a friend, dispatch: */
+    document.addEventListener('friend-added', fetchFriends);
+  });
+</script>
+
+<style>
+  .no-select {
+    -webkit-touch-callout: none !important;   /* no long-press menu */
+    -webkit-user-drag: none !important;       /* no drag start */
+    -webkit-user-select: none !important;     /* Safari/Chrome */
+    -moz-user-select: none !important;        /* Firefox */
+    -ms-user-select: none !important;         /* IE10+ */
+    user-select: none !important;             /* Standard */
+  }
+</style>
+
+<script>
+  document.querySelectorAll('.no-select').forEach(el => {
+    // Prevent mouse/touch from ever starting text selection
+    el.addEventListener('mousedown',  e => e.preventDefault());
+    el.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    // Prevent the context menu (long-press) on iOS
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  });
+</script>
+
 {% endblock %}

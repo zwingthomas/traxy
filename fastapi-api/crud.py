@@ -36,14 +36,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 # User
-def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
-    return db.query(models.User).filter(models.User.username == username).first()
+def get_user_by_username(db: Session, uname: str) -> Optional[models.User]:
+    return (
+        db.query(models.User)
+        .filter(func.lower(models.User.username) == uname.lower())
+        .first()
+    )
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     if get_user_by_username(db, user.username):
         raise HTTPException(status_code=400, detail="Username already taken")
     db_user = models.User(
         username=user.username,
+        usernameLower=func.lower(user.username),
         hashed_password=get_password_hash(user.password)
     )
     db.add(db_user)
@@ -62,7 +67,7 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[mod
 def get_trackers_for_user(db: Session, user_id: int, visibility: List[str], current_user: Optional[models.User] = None) -> List[models.Tracker]:
     q = db.query(models.Tracker).filter(
         models.Tracker.user_id == user_id,
-        models.Tracker.visibility.in_(visibility)
+        func.lower(models.Tracker.visibility).in_(visibility)
     ).order_by(models.Tracker.position)
     return q.all()
 
@@ -193,24 +198,37 @@ def search_users_by_prefix(db: Session, prefix: str, limit: int = 10):
              .limit(limit)\
              .all()
 
-def add_friend(db: Session, user_id: int, friend_username: str):
-    friend = get_user_by_username(db, friend_username)
-    if not friend:
+def add_friend(db: Session, user_id: int, friend_username: str) -> None:
+    """Add <friend_username> as mutual friend of <user_id> (idempotent)."""
+    me      = db.get(models.User, user_id)
+    friend  = get_user_by_username(db, friend_username)
+    if not friend or me.id == friend.id:
         raise HTTPException(404, "User not found")
-    # insert into friendships table
-    db.execute(friendships.insert().values(user_id=user_id, friend_id=friend.id))
-    db.commit()
 
-def get_friends(db: Session, user_id: int):
-    u = db.query(models.User).get(user_id)
-    return u.friends
+    if friend not in me.friends:     # many-to-many append is idempotent
+        me.friends.append(friend)
+        friend.friends.append(me)    # mutual
+        db.commit()
 
-# Return True if `other_id` is in the friend‐list of `user_id`.
+def get_friends(db: Session, user_id: int) -> list[models.User]:
+    u = db.get(models.User, user_id)
+    return u.friends if u else []
+
 def are_friends(db: Session, user_id: int, other_id: int) -> bool:
-    row = db.query(friendships).filter(
-        and_(
-            friendships.c.user_id   == user_id,
-            friendships.c.friend_id == other_id
-        )
-    ).first()
-    return row is not None
+    me    = db.get(models.User, user_id)
+    other = db.get(models.User, other_id)
+    if not me or not other:
+        return False
+    return other in me.friends
+
+def remove_friend(db: Session, user_id: int, friend_username: str) -> None:
+    me     = db.get(models.User, user_id)
+    friend = get_user_by_username(db, friend_username)
+    if not friend or me.id == friend.id:
+        raise HTTPException(404, "User not found")
+    # remove both sides
+    if friend in me.friends:
+        me.friends.remove(friend)
+    if me in friend.friends:
+        friend.friends.remove(me)
+    db.commit()

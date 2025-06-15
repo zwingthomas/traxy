@@ -3,11 +3,6 @@ const apiFetch = window.apiFetch || ((path, opts) =>
   fetch((window.API_BASE_URL||'') + path, opts).then(res => res.json())
 );
 const isPublic = typeof window.PUBLIC_USERNAME !== "undefined";
-const TRACKERS_ENDPOINT = isPublic
-  // public profile
-  ? `/api/users/${window.PUBLIC_USERNAME}/trackers?visibility=public`
-  // your own dashboard
-  : "/api/trackers";
 
 /**
  * Display a little speech-bubble input above a cell.
@@ -115,17 +110,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderAll();
 });
 
-// renderAll async and fetch the real backend data
+// renderAll async and fetch the real backend data when the trackers are updated
 async function renderAll(){
   let trackers;
-  try {
-    trackers = await apiFetch(TRACKERS_ENDPOINT);
-  } catch (e) {
-    console.error(`Failed to fetch "${TRACKERS_ENDPOINT}":`, e);
+  if (!isPublic) {
+    try {
+      trackers = await apiFetch("/api/trackers");
+    } catch (e) {
+      console.error(`Failed to fetch /api/trackers":`, e);
+      trackers = getInitialTrackers();
+    }
+    console.log("trackers from backend:", trackers);
+  }
+  else {
     trackers = getInitialTrackers();
   }
-  console.log("trackers from backend:", trackers);
-
   trackers.forEach(t => {
     const card = document.querySelector(`[data-tracker-id="${t.id}"]`);
     if (!card) return;
@@ -178,16 +177,17 @@ function renderCalendar(card) {
   const cal = card.querySelector('.calendar');
   cal.innerHTML = '';
   cal.className = 'calendar grid grid-cols-7 gap-1';
+  cal.addEventListener('selectionstart', e => e.preventDefault());
 
   days.forEach(dayData => {
-    // pull these out IMMEDIATELY
+    // pull these out immediately
     const date       = dayData.date;
     const total      = dayData.total;
     const isClickable = [today, yesterday, twoDaysAgo].includes(date);
   
     // build the cell
     const cell = document.createElement('div');
-    cell.className = 'relative w-12 h-12 rounded border flex items-center justify-center text-sm';
+    cell.className = 'relative w-12 h-12 rounded border flex items-center justify-center text-sm select-none';
     cell.dataset.date  = date;
     cell.dataset.value = total;
     
@@ -195,16 +195,49 @@ function renderCalendar(card) {
     const ratio = target > 0 ? Math.min(total / target, 1) : 0;
     cell.style.backgroundColor = `rgba(${r},${g},${b},${ratio})`;
     cell.style.color           = ratio > 0.5 ? '#fff' : '#000';
-    cell.textContent           = total;
     
+    
+    //cell.textContent           = total;
+    // clear out any previous text
+    cell.textContent = '';
+
+    if (widgetType !== 'boolean') {
+      // build an SVG data-URI for the number
+      const size = 32;
+      const fontSize = 14;
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg"
+            width="${size}" height="${size}">
+          <text x="50%" y="50%"
+                fill="${cell.style.color}"
+                font-size="${fontSize}"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                font-family="sans-serif">
+            ${total}
+          </text>
+        </svg>`.trim();
+
+      // encode and stick it in an <img>
+      const uri = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+      const img = document.createElement('img');
+      img.src = uri;
+
+      // prevent the <img> from swallowing your cell events
+      img.style.pointerEvents = 'none';
+
+      // center it if you like
+      img.classList.add('m-auto');
+
+      cell.appendChild(img);
+    }
+
     if (!isPublic) {
       if (isClickable) {
         cell.style.cursor = 'pointer';
-    
-        let   pressTimer;
         
         // click to record / toggle
-        cell.addEventListener('click', async () => {
+        async function increment() {
           let payload;
           if (widgetType === 'boolean') {
             const current = Number(cell.dataset.value) || 0;
@@ -282,24 +315,40 @@ function renderCalendar(card) {
             return;
           }
           await renderAll();
-        });
+        };
+
+        async function reset() {
+          const res = await fetch(
+            `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
+            { method: 'DELETE', credentials: 'include' }
+          );
+          if (!res.ok) return alert("Could not reset this day's total");
+          await renderAll();
+        }
         
-        // long-press to reset
-        cell.addEventListener('mousedown', () => {
-          pressTimer = setTimeout(async () => {
-            const res = await fetch(
-              `/api/activities/reset?tracker_id=${tid}&day=${date}`, 
-              { method: 'DELETE', credentials: 'include' }
-            );
-            if (!res.ok) {
-              return alert("Could not reset this day's total");
-            }
-            await renderAll();
-          }, 800);
+        let downAt = 0;
+
+        // unified pointer events
+        cell.addEventListener('pointerdown', e => {
+          if (e.target.closest('.input-popup')) return; // cannot do prevent default without not being able to use popup
+          e.preventDefault();           // kill text-select / context menu
+          downAt = Date.now();
+        }, { passive: false });
+
+        cell.addEventListener('pointerup', e => {
+          if (e.target.closest('.input-popup')) return; // cannot do prevent default without not being able to use popup
+          e.preventDefault();
+          const held = Date.now() - downAt;
+          if (held >= 800) {
+            reset();
+          } else {
+            increment();
+          }
         });
-        ['mouseup','mouseleave'].forEach(evt =>
-          cell.addEventListener(evt, () => clearTimeout(pressTimer))
-        );
+
+        cell.addEventListener('pointercancel', e => {
+          e.preventDefault();
+        });
       }
     }
     cal.appendChild(cell);

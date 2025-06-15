@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, redirect, url_for, request, session, flash
+from flask import Flask, Response, render_template, redirect, url_for, request, session, flash, g
 import os, requests
 import secrets_manager
 
@@ -50,6 +50,7 @@ def login():
         except requests.RequestException as e:
             flash(f"Login error: {e}", "error")
     return render_template('login.html')
+    
 
 @app.route('/logout')
 def logout():
@@ -294,9 +295,12 @@ def update_tracker_proxy(tid):
 @app.route('/u/<username>')
 def public_profile(username):
     try:
-        r = requests.get(
-            f"{API}/api/users/{username}/trackers?visibility=public"
-        )
+        token = session.get('token')
+        headers = {}
+        if token:
+            headers['Authorization'] = f"Bearer {token}"
+
+        r = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
         if r.status_code == 404:
             flash("User not found.", "warning")
             return redirect(url_for('index'))
@@ -304,11 +308,19 @@ def public_profile(username):
             flash(f"Error fetching public profile: {r.status_code} — {r.text}", "error")
             return redirect(url_for('index'))
         trackers = r.json()
+
+        friends = []
+        are_friends = False
+        r = requests.get(f"{API}/api/users/{username}/friends", headers=headers)
+        if r.ok:
+            are_friends = True
+            friends = r.json()
+
     except requests.RequestException as e:
         flash(f"Error fetching public profile: {e}", "error")
         return redirect(url_for('index'))
 
-    return render_template('user.html', username=username, trackers=trackers)
+    return render_template('user.html', username=username, friends=friends, trackers=trackers, are_friends=are_friends)
 
 @app.route('/api/users/<username>/trackers')
 def proxy_users_trackers(username):
@@ -316,12 +328,102 @@ def proxy_users_trackers(username):
     headers = {}
     if token:
         headers['Authorization'] = f"Bearer {token}"
-    # forward query string (e.g. ?visibility=public,friends)
-    qs = request.query_string.decode()
-    upstream = requests.get(f"{API}/api/users/{username}/trackers?{qs}",
-                            headers=headers)
+    upstream = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
     return (upstream.content, upstream.status_code,
             [('Content-Type', upstream.headers.get('Content-Type',''))])
+
+@app.route("/api/users/search")
+def proxy_user_search():
+    """
+    Pass-through proxy to backend /api/users/search.
+
+    Front-end calls:  /api/users/search?prefix=<string>
+    FastAPI backend expects:  ?prefix=<string>
+    """
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+
+    # read query-string exactly as the browser sent it
+    prefix = request.args.get("prefix", "")
+    limit  = request.args.get("limit", "10")      # optional – default=10
+
+    headers =  {"Authorization": f"Bearer {token}",
+                "Accept-Encoding": "identity"}
+
+    try:
+        r = requests.get(
+            f"{API}/api/users/search",
+            params={"prefix": prefix, "limit": limit},
+            headers=headers,
+            timeout=5,
+        )
+        return (r.text, r.status_code, r.headers.items())
+    except requests.RequestException as e:
+        return (str(e), 502)
+    
+@app.route("/api/users/<username>/friends")
+def proxy_read_friends(username: str):
+    token   = session.get("token")         # may be None for anonymous
+    headers = {
+        "Accept-Encoding": "identity",
+        **({"Authorization": f"Bearer {token}"} if token else {})
+    }
+
+    try:
+        r = requests.get(f"{API}/api/users/{username}/friends",
+                         headers=headers, timeout=5)
+    except requests.RequestException as exc:
+        return str(exc), 502
+
+    # ▸ Return **decoded** body and strip CE / length headers
+    hop_by_hop = {
+        "Content-Encoding",
+        "Content-Length",
+        "Transfer-Encoding",
+        "Connection",
+    }
+    clean_headers = [(k, v) for k, v in r.headers.items() if k.lower() not in hop_by_hop]
+    return r.content, r.status_code, clean_headers
+
+
+@app.route("/api/users/<username>/friends", methods=["POST"])
+def proxy_add_friend(username):
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+
+    r = requests.post(f"{API}/api/users/{username}/friends",
+                      headers={"Authorization": f"Bearer {token}"})
+    return (r.text, r.status_code, r.headers.items())
+
+@app.route("/api/users/<username>/friends", methods=["DELETE"])
+def proxy_delete_friend(username):
+    token = session.get("token")
+    if not token:
+        return ("", 401)
+    r = requests.delete(
+        f"{API}/api/users/{username}/friends?username={request.args.get('username')}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    return (r.text, r.status_code, r.headers.items())
+
+@app.context_processor
+def inject_current_user():
+    token = session.get('token')
+    user = None
+    if token:
+        try:
+            # Ask API for the current user
+            resp = requests.get(
+                f"{API}/api/users/me",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            if resp.ok:
+                user = resp.json()
+        except requests.RequestException:
+            pass
+    return {"current_user": user}
 
 if __name__ == '__main__':
     app.run(debug=True)
