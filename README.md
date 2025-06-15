@@ -61,11 +61,11 @@ Browse the public profile of **zwingthomas** at
 
 ---
 
-## 🛠️ Roadmap
+# 🛠️ Roadmap
 
-###
-### MUST HAVES
-###
+##
+## MUST HAVES
+##
 
 
 June 14
@@ -116,9 +116,9 @@ July 12
 
 
 
-###
-### NICE TO HAVE
-###
+##
+## NICE TO HAVE
+##
 
 
 July 19
@@ -173,9 +173,9 @@ September 20, 27
 
 
 
-###
-### LAST STEPS
-###
+##
+## LAST STEPS
+##
 
 
 Oct, Nov, Dec
