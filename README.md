@@ -66,28 +66,47 @@ Browse the public profile of **zwingthomas** at
 ### MUST HAVES
 
 June 14
+
 **6 - 12 hours** - Database migration to VM
+
 **6 - 10 hours** - Make adding friends, friend requests. Have another icon similar to friend badge next to it with friend requests
 
+
 June 21
+
 **2 hours** - See your profile as you view it, publicly, and as friends will see it
+
 **2 hours** - Have First Name / Last Name / Email / Phone
+
 **2 hours** - Make dashboard endpoint be /u/active-user-username instead of /dashboard
+
 **12 hours** - Allow people to change their password / forget their password
+
 **4 hours** - Show error dynamically if username is already taken when signing up
 
+
 June 28
+
 **1 hour** - Fix tracker's overlap on smaller screens
+
 **2 - 3 hours** - Fix weekly, monthly, etc coloring for trackers
+
 **2 hours** - Check on security (there may be a massive spike here)
+
 **6 hours** - Timezones
+
 **3 hours** - Fix bug: On mobile it is too easy to move around trackers
 
+
 July 5
+
 **6 - 10 hours** - Profile pictures
+
 **10 hours** - Implement testing frameworks
 
+
 July 12
+
 **20 hours** - Implement testing frameworks
 
 
@@ -95,33 +114,54 @@ July 12
 
 ### NICE TO HAVE
 
+
 July 19
+
 **8 hours** - Make username changable along with user's URL endpoint
+
 **12 hours** - Be able to group trackers and have a overview as well
 
+
 July 26
+
 **15 - 25 hours** - Shared trackers
 
+
 August 2
+
 **20 - 30 hours** - Be able to make groups of friends and set challenges
 
+
 August 9
+
 **4 - 6 hours** - Sharing specific trackers
+
 **4 - 6 hours** - Streaks
 
+
 August 16
+
 **8 hours** - Debt/Overages around trackers
+
 **4 hours** - Moods
+
 **12 hours** - Journal for each tracker 
 
+
 August 23
+
 **3 hours** - Return and rerender only the tracker updated when updating a tracker
+
 **8 - 16 hours** - Visual rewards for goal accomplishment
 
+
 August 30, September 6, September 13
+
 **60 hours** - ChatGPT integration
 
+
 September 20, 27
+
 **20 hours** - Write tests
 
 
@@ -129,8 +169,12 @@ September 20, 27
 
 ### LAST STEPS
 
+
 Oct, Nov, Dec
+
 **60 - 80 hours** hours - Journalling/blog epic
 
+
 2026
+
 **200 hours** - Write frontend for iOS and Android
