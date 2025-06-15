@@ -1,6 +1,6 @@
 # Traxy — Activity & Habit Tracker
 
-[![Live Demo](https://img.shields.io/badge/demo-traxy.app/u/zwingthomas-blue)](https://www.traxy.app/u/zwingthomas)
+[![Live Demo](https://img.shields.io/badge/demo-traxy.app/u/zwingthomas-blue)](https://www.traxy.app)
 
 Traxy is a lightweight, **social** habit-tracking app built with Python (Flask/FastAPI), Tailwind CSS, and vanilla JavaScript. Record daily activities on a calendar grid, share selected trackers with friends, and manage real-time friend requests—all without page reloads.
 
@@ -13,7 +13,7 @@ Browse the public profile of **zwingthomas** at
 
 ---
 
-## 🔑 Key Features
+## 🔑 Key Features (future looking)
 
 ### Trackers Calendar  
 - **Boolean**, **Counter**, or **Numeric-Input** trackers  
@@ -33,10 +33,10 @@ Browse the public profile of **zwingthomas** at
 
 ### User Account Management  
 - Sign up / Log in with session-based auth  
-- Change or reset password (email token flow)  
-- Profile fields: First Name / Last Name / Email / Phone  
-- Profile pictures (avatar upload & resize)  
-- Timezone sync (auto-detect and store on login)  
+- Change or reset password (email token flow): coming soon 
+- Profile fields: First Name / Last Name / Email / Phone: coming soon
+- Profile pictures (avatar upload & resize): coming soon
+- Timezone sync (auto-detect and store on login)
 
 ---
 
