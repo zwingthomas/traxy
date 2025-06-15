@@ -1,6 +1,6 @@
 # Traxy — Activity & Habit Tracker
 
-[![Live Demo](https://img.shields.io/badge/demo-traxy.app/u/zwingthomas-blue)](https://www.traxy.app)
+[![Live Demo](https://img.shields.io/badge/demo-traxy.app-blue)](https://www.traxy.app)
 
 Traxy is a lightweight, **social** habit-tracking app built with Python (Flask/FastAPI), Tailwind CSS, and vanilla JavaScript. Record daily activities on a calendar grid, share selected trackers with friends, and manage real-time friend requests—all without page reloads.
 
