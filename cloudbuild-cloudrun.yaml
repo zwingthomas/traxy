@@ -1,0 +1,103 @@
+images:
+  - "gcr.io/traxy-463123/traxy-backend:latest"
+  - "gcr.io/traxy-463123/traxy-frontend:latest"
+
+steps:
+  # Build & push FastAPI backend container
+  - name: "gcr.io/cloud-builders/docker"
+    id: Build-and-push-backend
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/traxy-463123/traxy-backend:latest",
+        "./fastapi-api",
+        "--build-arg",
+        "MIGRATE_CMD=alembic upgrade head"
+      ]
+  - name: "gcr.io/cloud-builders/docker"
+    id: Push-backend
+    args:
+      [
+        "push",
+        "gcr.io/traxy-463123/traxy-backend:latest"
+      ]
+
+  # Build & push frontend container
+  - name: "gcr.io/cloud-builders/docker"
+    id: Build-and-push-frontend
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/traxy-463123/traxy-frontend:latest",
+        "./flask-ui",
+      ]
+  - name: "gcr.io/cloud-builders/docker"
+    id: Push-frontend
+    args:
+      [
+        "push",
+        "gcr.io/traxy-463123/traxy-frontend:latest"
+      ]
+
+  # Deploy backend to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    id: Deploy-backend
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        for i in 1 2 3; do
+          echo "Deploying traxy-backend (attempt $i)…"
+          if gcloud run deploy traxy-backend \
+              --project=traxy-463123 \
+              --image=gcr.io/traxy-463123/traxy-backend:latest \
+              --region=us-central1 \
+              --platform=managed \
+              --allow-unauthenticated \
+              --add-cloudsql-instances=traxy-backend:us-central1:traxy-database \
+              --set-env-vars=CLOUD_SQL_CONNECTION_NAME=traxy-backend:us-central1:traxy-database \
+              --cpu=1 \
+              --memory=256Mi \
+              --concurrency=80 \
+              --min-instances=0 \
+              --max-instances=1; then
+            echo "Traxy-backend deployed!"
+            break
+          else
+            echo "!!! Deployment failed—retrying in 10s…"
+            sleep 10
+          fi
+        done
+
+  # Deploy frontend to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    id: Deploy-frontend
+    entrypoint: bash
+    args:
+      - "-c"
+      - |
+        for i in 1 2 3; do
+          echo "Deploying traxy-frontend (attempt $i)…"
+          if gcloud run deploy traxy-frontend \
+              --project=traxy-463123 \
+              --image=gcr.io/traxy-463123/traxy-frontend:latest \
+              --region=us-central1 \
+              --platform=managed \
+              --allow-unauthenticated \
+              --cpu=1 \
+              --memory=128Mi \
+              --concurrency=80 \
+              --min-instances=0 \
+              --max-instances=1 \
+              --quiet; then
+            echo "Traxy-frontend deployed!"
+            break
+          else
+            echo "!!! Deployment failed—retrying in 10s…"
+            sleep 10
+          fi
+        done
+
+timeout: "1200s"

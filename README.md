@@ -8,8 +8,9 @@ Traxy is a lightweight, **social** habit-tracking app built with Python (Flask/F
 
 ## 🚀 Live Demo
 
-Browse the public profile of **zwingthomas** at  
+Browse the public profile of **zwingthomas** on App Engine Standard and Cloud Run at  
 🔗 https://www.traxy.app/u/zwingthomas
+🔗 https://traxy-frontend-378890077459.us-central1.run.app/u/zwingthomas
 
 ---
 

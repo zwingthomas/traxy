@@ -33,9 +33,6 @@ htmlcov/
 # Cloud Build config
 cloudbuild.yaml
 
-# Docker
-Dockerfile
-
 # Local SQLite files
 *.db
 
