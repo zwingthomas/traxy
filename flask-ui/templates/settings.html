@@ -47,153 +47,185 @@
           Save changes
         </button>
     </form>
-    <div class="pt-4 border-t space-y-4">
-        <div class="relative">
-            <input
-                type="password"
+    <div class="relative">
+        <form id="password-form" class="space-y-4">
+            <!-- Current password -->
+            <div class="relative">
+              <input
                 id="old_password"
                 name="old_password"
+                type="password"
                 placeholder="Current password"
                 class="w-full border rounded px-3 py-2 pr-10"
-            />
-            <button
+              />
+              <button
                 type="button"
-                tabindex="-1"
-                class="absolute inset-y-0 right-2 flex items-center"
-                onClick="togglePassword('old_password', this)"
-            >
-                <!-- open-eye -->
-                <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274
-                        4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                aria-label="Show or hide password"
+                class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <!-- Eye open: outline + pupil -->
+                <svg
+                  class="eye-open-icon hidden h-6 w-6 text-gray-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2"
+                >
+                  <!-- outline -->
+                  <path
+                    stroke-linecap="round" stroke-linejoin="round"
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                  />
+                  <!-- pupil -->
+                  <circle cx="12" cy="12" r="3" fill="currentColor" />
                 </svg>
-        
-                <!-- closed-eye with lashes, hidden by default -->
-                <svg class="h-5 w-5 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.269-2.944-9.543-7
-                        a10.056 10.056 0 012.223-3.607M6.58 6.58A9.956 9.956 0 0112
-                        5c4.478 0 8.269 2.944 9.543 7a9.963 9.963 0 01-1.67
-                        3.11" />
-                    <!-- lash strokes -->
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 4l1-1M10 4l1-1M13 4l1-1" />
+                <!-- Eye closed: outline only -->
+                <svg
+                  class="eye-closed-icon h-6 w-6 text-gray-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2"
+                >
+                  <!-- outline -->
+                  <path
+                    stroke-linecap="round" stroke-linejoin="round"
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                  />
                 </svg>
-            </button>
-        </div>
-      
-        <div class="relative">
-            <input
-                type="password"
+              </button>
+            </div>
+          
+            <!-- New password -->
+            <div class="relative">
+              <input
                 id="new_password"
                 name="new_password"
+                type="password"
                 placeholder="New password"
                 class="w-full border rounded px-3 py-2 pr-10"
-            />
-            <button
+              />
+              <button
                 type="button"
-                tabindex="-1"
-                class="absolute inset-y-0 right-2 flex items-center"
-                onClick="togglePassword('new_password', this)"
-            >
-                <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477
-                        0 8.268 2.943 9.542 7-1.274 4.057-5.065
-                        7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                aria-label="Show or hide password"
+                class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <!-- Eye open: outline + pupil -->
+                <svg
+                  class="eye-open-icon hidden h-6 w-6 text-gray-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2"
+                >
+                  <!-- outline -->
+                  <path
+                    stroke-linecap="round" stroke-linejoin="round"
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                  />
+                  <!-- pupil -->
+                  <circle cx="12" cy="12" r="3" fill="currentColor" />
                 </svg>
-                <svg class="h-5 w-5 text-gray-600 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478
-                        0-8.269-2.944-9.543-7  a10.056 10.056 0 012.223-3.607M6.58
-                        6.58A9.956 9.956 0 0112 5c4.478 0 8.269 2.944
-                        9.543 7a9.963 9.963 0 01-1.67 3.11" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 4l1-1M10 4l1-1M13 4l1-1" />
+                <!-- Eye closed: outline only -->
+                <svg
+                  class="eye-closed-icon h-6 w-6 text-gray-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2"
+                >
+                  <!-- outline -->
+                  <path
+                    stroke-linecap="round" stroke-linejoin="round"
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+                  />
                 </svg>
+              </button>
+            </div>
+          
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+              Change password
             </button>
-        </div>
+        </form>
     </div>
+
+    <!-- Password script to be able to toggle password from ******* to plaintext to double check password before submitting -->
+    <script>
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+          btn.addEventListener('click', () => {
+            // find the sibling input in the same wrapper
+            const wrapper = btn.closest('.relative');
+            const input   = wrapper.querySelector('input');
+            const eyeOpen = wrapper.querySelector('.eye-open-icon');
+            const eyeOff  = wrapper.querySelector('.eye-closed-icon');
+      
+            // toggle the input type
+            const hiding = input.type === 'password';
+            input.type = hiding ? 'text' : 'password';
+      
+            // swap icons
+            eyeOpen.classList.toggle('hidden');
+            eyeOff.classList.toggle('hidden');
+          });
+        });
+    </script>
 </div>
 
-<!-- Password script to be able to toggle password from ******* to plaintext to double check password before submitting -->
-<script>
-    function togglePassword(inputId, btn) {
-      const input = document.getElementById(inputId);
-      const [eyeOpen, eyeClosed] = btn.querySelectorAll('svg');
-      if (input.type === 'password') {
-        input.type = 'text';
-        eyeOpen.classList.add('hidden');
-        eyeClosed.classList.remove('hidden');
-      } else {
-        input.type = 'password';
-        eyeOpen.classList.remove('hidden');
-        eyeClosed.classList.add('hidden');
-      }
-    }
-</script>
+
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Pre-fill the profile form
-      (async () => {
-        try {
-          const me = await window.apiFetch('/api/users/me/profile');
-          for (const [key, val] of Object.entries(me)) {
-            const input = document.querySelector(`#profile-form [name="${key}"]`);
-            if (input) input.value = val ?? '';
-          }
-        } catch (err) {
-          console.error('Could not load profile:', err);
-          alert('Failed to load your profile.');
-        }
-      })();
-    
-      // Handle profile updates
-      const profileForm = document.getElementById('profile-form');
-      profileForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(profileForm));
-        try {
-          await window.apiFetch('/api/users/me/profile', {
-            method: 'PUT',
-            body: JSON.stringify(data)
-          });
-          alert('Profile updated.');
-        } catch (err) {
-          console.error('Profile update failed:', err);
-          alert('Could not save profile.');
-        }
+document.addEventListener('DOMContentLoaded', () => {
+  // Load the current profile and pre-fill the form
+  (async function loadProfile() {
+    try {
+      const me = await window.apiFetch('/api/users/me/profile');
+      Object.entries(me).forEach(([key, val]) => {
+        const fld = document.querySelector(`#profile-form [name="${key}"]`);
+        if (fld) fld.value = val ?? '';
       });
-    
-      // Handle password changes
-      const passwordForm = document.getElementById('password-form');
-      passwordForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(passwordForm));
-        if (!data.old_password || !data.new_password) {
-          return alert('Please fill out both password fields.');
-        }
-        try {
-          await window.apiFetch('/api/users/me/password', {
-            method: 'PUT',
-            body: JSON.stringify({
-              old_password: data.old_password,
-              new_password: data.new_password
-            })
-          });
-          alert('Password changed.');
-          passwordForm.reset();
-        } catch (err) {
-          console.error('Password change failed:', err);
-          alert('Could not change password.');
-        }
+    } catch (err) {
+      console.error('Could not load profile:', err);
+      // TODO: show a toast
+    }
+  })();
+
+  // Hook up profile‐form submission
+  const profileForm = document.getElementById('profile-form');
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(profileForm));
+    try {
+      await window.apiFetch('/api/users/me/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
       });
-    });
+      alert('Profile updated.');
+    } catch (err) {
+      console.error('Profile update failed:', err);
+      alert('Could not save profile.');
+    }
+  });
+
+  const pwdForm = document.getElementById('password-form');
+  pwdForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const { old_password, new_password } =
+      Object.fromEntries(new FormData(pwdForm));
+
+    if (!old_password || !new_password) {
+      return alert('Please fill out both password fields.');
+    }
+
+    try {
+      r = await window.apiFetch('/api/users/me/password', {
+        method: 'PUT',
+        body: JSON.stringify({ old_password, new_password })
+      });
+      if (r.ok) {
+        alert('Password changed.');
+        pwdForm.reset();
+      }
+    } catch (err) {
+      console.error('Password change failed:', err);
+      alert('Could not change password.');
+    }
+  });
+});
 </script>
 {% endblock %}

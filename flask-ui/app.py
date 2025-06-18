@@ -170,6 +170,43 @@ def settings():
 
     return render_template("settings.html", profile=profile)
 
+# Request password reset
+@app.route("/forgot-password", methods=["GET","POST"])
+def forgot_password():
+    if request.method=="POST":
+        email = request.form["email"]
+        token = session.get("token")
+        headers = {"Authorization":f"Bearer {token}"} if token else {}
+        r = requests.post(
+           f"{API}/password-reset/request",
+           headers={**headers, "Content-Type":"application/json"},
+           json={"email": email},
+           timeout=5
+        )
+        flash("If that address exists, you’ll get an email shortly", "info")
+        return redirect(url_for("login"))
+    return render_template("forgot_password.html")
+
+
+# Reset password form
+@app.route("/reset-password", methods=["GET","POST"])
+def reset_password():
+    token = request.args.get("token") or request.form.get("token")
+    if request.method=="POST":
+        new_pw = request.form["new_password"]
+        resp = requests.post(
+          f"{API}/password-reset",
+          headers={"Content-Type":"application/json"},
+          json={"token": token, "new_password": new_pw},
+          timeout=5
+        )
+        if resp.status_code == 200:
+            flash("Your password has been reset. Please log in.", "success")
+            return redirect(url_for("login"))
+        else:
+            flash("Invalid or expired link", "error")
+    return render_template("reset_password.html", token=token)
+
 ## Trackers
 
 @app.route('/api/trackers')

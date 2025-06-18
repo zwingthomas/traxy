@@ -1,8 +1,11 @@
 from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from datetime import datetime, timedelta
 
 from database import Base, engine
+
+import uuid
 
 # Association table for self-referential friendships
 friendships = Table(
@@ -53,6 +56,17 @@ class Activity(Base):
     tracker_id = Column(Integer, ForeignKey('trackers.id'), nullable=False)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     value = Column(Integer, default=1)
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    user_id    = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token      = Column(String, unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    expires_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(hours=1))
+    used       = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="reset_tokens")
 
 def init_db():
     Base.metadata.create_all(bind=engine)

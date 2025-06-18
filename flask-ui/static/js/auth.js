@@ -40,6 +40,11 @@ window.apiFetch = async function(path, opts = {}) {
     return;
   }
 
+  // do not run .json on no content returns
+  if (res.status === 204) {
+    return null;
+  }
+
   // If there's JSON, parse it; otherwise return the raw Response
   const ct = res.headers.get('Content-Type') || '';
   if (ct.includes('application/json')) {

@@ -11,7 +11,7 @@ from jose import jwt
 import secrets_manager
 
 import models, schemas
-from models import friendships, Activity, Tracker
+from models import friendships, Activity, Tracker, PasswordResetToken, User
 
 # Setup security
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -237,8 +237,47 @@ def update_profile(db: Session, user_id: int, data: schemas.ProfileUpdate):
     db.query(models.User).filter(models.User.id == user_id).update(data.model_dump(exclude_none=True))
     db.commit()
 
+
+# Change password
+
 def change_password(db: Session, user: models.User, old_pw: str, new_pw: str):
     if not pwd_ctx.verify(old_pw, user.hashed_password):
         raise HTTPException(400, "Old password incorrect")
     user.hashed_password = pwd_ctx.hash(new_pw)
+    db.commit()
+
+def create_password_reset(db: Session, email: str) -> PasswordResetToken:
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        return None
+    # invalidate old tokens?
+    tok = PasswordResetToken(user_id=user.id)
+    db.add(tok)
+    db.commit()
+    db.refresh(tok)
+    return tok
+
+
+# Forgot password
+
+def verify_reset_token(db: Session, token: str) -> PasswordResetToken:
+    now = datetime.utcnow()
+    pr = (
+      db.query(PasswordResetToken)
+        .filter(
+           PasswordResetToken.token == token,
+           PasswordResetToken.expires_at >= now,
+           PasswordResetToken.used == None
+        )
+        .first()
+    )
+    return pr
+
+def mark_token_used(db: Session, pr: PasswordResetToken):
+    pr.used = datetime.utcnow()
+    db.commit()
+
+def change_password_by_user_id(db: Session, user_id: int, new_password: str):
+    user = db.query(User).get(user_id)
+    user.hashed_password = pwd_ctx.hash(new_password)
     db.commit()

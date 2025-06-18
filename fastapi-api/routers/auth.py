@@ -1,9 +1,14 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 import crud, schemas, deps
 
-router = APIRouter(prefix='/api/auth', tags=['auth'])
+from schemas import PasswordResetRequest, PasswordReset
+
+from deps import get_db
+from core.email import send_reset_email
+
+router = APIRouter(prefix='/api/auth', tags=['auth', 'passwords'])
 logger = logging.getLogger("app.routers.auth")
 
 
@@ -42,3 +47,29 @@ def login(form_data: schemas.UserCreate, db: Session = Depends(deps.get_db)):
     except Exception as e:
         logger.exception("unexpected error in login for username=%s: %s", form_data.username, e)
         raise HTTPException(500, "Internal server error")
+    
+
+@router.post("/password-reset/request", status_code=202)
+def password_reset_request(
+    payload: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    pr = crud.create_password_reset(db, payload.email)
+    if pr:
+        background_tasks.add_task(send_reset_email, pr.token, payload.email)
+    # Always 202 so as not to leak which emails exist
+    return {"msg": "If an account exists, you will receive a reset link."}
+
+
+@router.post("/password-reset", status_code=200)
+def password_reset(
+    payload: PasswordReset,
+    db: Session = Depends(get_db)
+):
+    pr = crud.verify_reset_token(db, payload.token)
+    if not pr:
+        raise HTTPException(400, "Invalid or expired token")
+    crud.change_password_by_user_id(db, pr.user_id, payload.new_password)
+    crud.mark_token_used(db, pr)
+    return {"msg": "Password has been reset"}
