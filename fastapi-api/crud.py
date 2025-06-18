@@ -232,3 +232,13 @@ def remove_friend(db: Session, user_id: int, friend_username: str) -> None:
     if me in friend.friends:
         friend.friends.remove(me)
     db.commit()
+
+def update_profile(db: Session, user_id: int, data: schemas.ProfileUpdate):
+    db.query(models.User).filter(models.User.id == user_id).update(data.model_dump(exclude_none=True))
+    db.commit()
+
+def change_password(db: Session, user: models.User, old_pw: str, new_pw: str):
+    if not pwd_ctx.verify(old_pw, user.hashed_password):
+        raise HTTPException(400, "Old password incorrect")
+    user.hashed_password = pwd_ctx.hash(new_pw)
+    db.commit()

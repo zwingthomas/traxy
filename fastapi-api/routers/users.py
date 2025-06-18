@@ -29,6 +29,19 @@ def update_me(
         db.refresh(current)
     return current
 
+@router.get("/me/profile", response_model=schemas.ProfileOut)
+def read_my_profile(current = Depends(deps.get_current_user)):
+    return current  # FastAPI will filter via the schema
+
+@router.put("/me/profile", response_model=schemas.ProfileOut)
+def update_my_profile(payload: schemas.ProfileUpdate, db: Session = Depends(deps.get_db), current = Depends(deps.get_current_user)):
+    crud.update_profile(db, current.id, payload)
+    return crud.get_user_by_id(db, current.id)
+
+@router.put("/me/password", status_code=204)
+def update_my_password(payload: schemas.PasswordChange, db: Session = Depends(deps.get_db), current = Depends(deps.get_current_user)):
+    crud.change_password(db, current, payload.old_password, payload.new_password)
+
 
 # @router.get(
 #     '/{username}/trackers',

@@ -75,6 +75,103 @@ def proxy_users_me():
     return (upstream.content, upstream.status_code,
             [('Content-Type', upstream.headers.get('Content-Type',''))])
 
+
+## Settings
+
+def _auth_headers():
+    token = session.get("token")
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+@app.route("/api/users/me/profile")
+def proxy_get_profile():
+    r = requests.get(f"{API}/api/users/me/profile",
+                     headers=_auth_headers(), timeout=5)
+    return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
+
+@app.route("/api/users/me/profile", methods=["PUT"])
+def proxy_update_profile():
+    r = requests.put(f"{API}/api/users/me/profile",
+                     headers={**_auth_headers(),
+                              "Content-Type": "application/json"},
+                     json=request.get_json(force=True), timeout=5)
+    return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
+
+@app.route("/api/users/me/password", methods=["PUT"])
+def proxy_change_password():
+    r = requests.put(f"{API}/api/users/me/password",
+                     headers={**_auth_headers(),
+                              "Content-Type": "application/json"},
+                     json=request.get_json(force=True), timeout=5)
+    return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
+
+def _strip_hop_by_hop(headers: requests.structures.CaseInsensitiveDict):
+    """Remove headers that Flask/Gunicorn will set for us."""
+    hop = {"Content-Encoding", "Content-Length", "Transfer-Encoding",
+           "Connection"}
+    return [(k, v) for k, v in headers.items() if k not in hop]
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    token = session.get("token")
+    if not token:
+        return redirect("/login")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    if request.method == "POST":
+        form = request.form.to_dict()
+
+        # profile update
+        profile_payload = {
+            k: v for k, v in form.items()
+            if k in ("first_name", "last_name", "email", "phone") and v
+        }
+        try:
+            # <-- use PUT not PATCH here -->
+            r = requests.put(
+                f"{API}/api/users/me/profile",
+                json=profile_payload,
+                headers=headers,
+                timeout=5,
+            )
+            r.raise_for_status()
+
+            # password change
+            old_pw = form.get("old_password")
+            new_pw = form.get("new_password")
+            if old_pw and new_pw:
+                r2 = requests.put(
+                    f"{API}/api/users/me/password",
+                    json={"old_password": old_pw, "new_password": new_pw},
+                    headers=headers,
+                    timeout=5,
+                )
+                flash(
+                  "Password changed." if r2.ok else "Error changing password",
+                  "success" if r2.ok else "error"
+                )
+
+            flash("Profile updated.", "success")
+        except requests.RequestException as exc:
+            flash(f"Could not update profile: {exc}", "error")
+
+        return redirect(url_for("settings"))
+
+    # GET: load the current profile
+    try:
+        r = requests.get(
+            f"{API}/api/users/me/profile", headers=headers, timeout=5
+        )
+        r.raise_for_status()
+        profile = r.json()
+    except requests.RequestException as exc:
+        flash(f"Could not load profile: {exc}", "error")
+        profile = {}
+
+    return render_template("settings.html", profile=profile)
+
+## Trackers
+
 @app.route('/api/trackers')
 def proxy_get_trackers():
     token = session.get('token')

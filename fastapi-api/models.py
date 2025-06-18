@@ -20,6 +20,12 @@ class User(Base):
     hashed_password = Column(String)
     timezone = Column(String)
 
+    first_name     = Column(String(length=60))
+    last_name      = Column(String(length=60))
+    email          = Column(String, unique=True, index=True)
+    phone          = Column(String, unique=True, index=True)
+    timezone       = Column(String)
+
     # self-referential many-to-many
     friends = relationship(
         'User',

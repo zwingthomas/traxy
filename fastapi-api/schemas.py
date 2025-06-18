@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, EmailStr
 from datetime import datetime, date, timedelta
 from typing import Annotated, List, Dict, Optional
 from enum import Enum
@@ -82,6 +82,22 @@ class ActivityCreate(BaseModel):
 class DailyAggregate(BaseModel):
     date: datetime
     total: int
+
+class ProfileOut(BaseModel):
+    first_name: Optional[str] = None
+    last_name:  Optional[str] = None
+    email:      Optional[EmailStr] = None
+    phone:      Optional[str] = None
+
+class ProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name:  Optional[str] = None
+    email:      Optional[EmailStr] = None
+    phone:      Optional[str] = None
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
 
 class Token(BaseModel):
     access_token: str

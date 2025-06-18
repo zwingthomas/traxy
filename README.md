@@ -71,22 +71,22 @@ Browse the public profile of **zwingthomas** on App Engine Standard and Cloud Ru
 
 June 14
 
-**6 - 12 hours** - Database migration to VM
+**2 hours** - Have First Name / Last Name / Email / Phone
 
-**6 - 10 hours** - Make adding friends, friend requests. Have another icon similar to friend badge next to it with friend requests
+**12 hours** - Allow people to change their password / forget their password
+
+**2 hours** - See your profile as you view it, publicly, and as various groups will see it
+
+**4 hours** - Show error dynamically if username is already taken when signing up
 
 
 June 21
 
-**2 hours** - See your profile as you view it, publicly, and as friends will see it
-
-**2 hours** - Have First Name / Last Name / Email / Phone
+**6 - 12 hours** - Database migration to VM
 
 **2 hours** - Make dashboard endpoint be /u/active-user-username instead of /dashboard
 
-**12 hours** - Allow people to change their password / forget their password
-
-**4 hours** - Show error dynamically if username is already taken when signing up
+**6 - 10 hours** - Make adding friends, friend requests. Have another icon similar to friend badge next to it with friend requests
 
 
 June 28

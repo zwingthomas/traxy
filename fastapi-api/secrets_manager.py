@@ -16,15 +16,15 @@ def get_numeric_project_number():
     return resp.text
 
 def get_secret(secret_id: str) -> str:
+    if os.getenv(secret_id):
+        return os.getenv(secret_id)
+    
     try:
         project_number = get_numeric_project_number()
     except:
         raise RuntimeError(
             f"Secret '{secret_id}' not found in env and not running on GCP."
         )
-    
-    if os.getenv(secret_id):
-        return os.getenv(secret_id)
     
     name = f"projects/{project_number}/secrets/{secret_id}/versions/latest"
     return client.access_secret_version(name=name).payload.data.decode("UTF-8")
