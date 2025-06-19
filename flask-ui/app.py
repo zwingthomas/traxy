@@ -88,9 +88,9 @@ def proxy_get_profile():
                      headers=_auth_headers(), timeout=5)
     return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
 
-@app.route("/api/users/me/profile", methods=["PUT"])
+@app.route("/api/users/me/profile", methods=["PATCH"])
 def proxy_update_profile():
-    r = requests.put(f"{API}/api/users/me/profile",
+    r = requests.patch(f"{API}/api/users/me/profile",
                      headers={**_auth_headers(),
                               "Content-Type": "application/json"},
                      json=request.get_json(force=True), timeout=5)

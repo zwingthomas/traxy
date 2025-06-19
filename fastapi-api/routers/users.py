@@ -33,7 +33,7 @@ def update_me(
 def read_my_profile(current = Depends(deps.get_current_user)):
     return current  # FastAPI will filter via the schema
 
-@router.put("/me/profile", response_model=schemas.ProfileOut)
+@router.patch("/me/profile", response_model=schemas.ProfileOut)
 def update_my_profile(payload: schemas.ProfileUpdate, db: Session = Depends(deps.get_db), current = Depends(deps.get_current_user)):
     crud.update_profile(db, current.id, payload)
     return crud.get_user_by_id(db, current.id)

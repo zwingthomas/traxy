@@ -25,6 +25,14 @@
         </div>
       
         <input
+          type="text"
+          name="username"
+          placeholder="Username / URL endpoint"
+          value="{{ profile.username }}"
+          class="w-full border rounded px-3 py-2"
+        />
+
+        <input
           type="email"
           name="email"
           placeholder="Email"
@@ -187,20 +195,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hook up profile‐form submission
   const profileForm = document.getElementById('profile-form');
-  profileForm.addEventListener('submit', async (e) => {
+  profileForm.addEventListener('submit', async e => {
     e.preventDefault();
-    const data = Object.fromEntries(new FormData(profileForm));
+    // pick up only the fields to change
+    const formData = new FormData(profileForm);
+    const payload = {};
+    for (const [k, v] of formData.entries()) {
+      if (!v) continue;         // skip empty
+      payload[k] = v.trim();    // strip whitespace
+    }
     try {
       await window.apiFetch('/api/users/me/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data),
+        method: 'PATCH',
+        body: JSON.stringify(payload),
       });
       alert('Profile updated.');
     } catch (err) {
-      console.error('Profile update failed:', err);
-      alert('Could not save profile.');
+      alert(err.message);
     }
-  });
+  });;
 
   const pwdForm = document.getElementById('password-form');
   pwdForm.addEventListener('submit', async e => {

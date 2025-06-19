@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey, JSON
+from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey, JSON, Computed
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from datetime import datetime, timedelta
@@ -19,7 +19,12 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    usernameLower = Column(String, unique=True, index=True)
+    usernameLower  = Column(
+      String,
+      Computed("lower(username)", persisted=True),
+      unique=True,
+      index=True,
+    )
     hashed_password = Column(String)
     timezone = Column(String)
 

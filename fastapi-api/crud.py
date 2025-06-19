@@ -2,8 +2,9 @@ import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date, and_
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from jose import jwt
@@ -234,9 +235,46 @@ def remove_friend(db: Session, user_id: int, friend_username: str) -> None:
     db.commit()
 
 def update_profile(db: Session, user_id: int, data: schemas.ProfileUpdate):
-    db.query(models.User).filter(models.User.id == user_id).update(data.model_dump(exclude_none=True))
-    db.commit()
+    payload = data.model_dump(exclude_none=True)
+    if 'username' in payload:
+        payload['usernameLower'] = payload['username'].lower()
+    try:
+        db.query(models.User).filter(models.User.id == user_id).update(payload, synchronize_session=False)
+        db.commit()
+    # This catches the UNIQUE constraint on username / email / phone
+    except IntegrityError as e:
+        db.rollback()
 
+        # try Postgres-style diag
+        constraint = None
+        orig = getattr(e, "orig", None)
+        diag  = getattr(orig, "diag", None)
+        if diag and diag.constraint_name:
+            constraint = diag.constraint_name.lower()
+        else:
+            # fallback: lower‐case the textual error
+            msg = str(orig or e).lower()
+            if "username_lower" in msg or "usernamelower" in msg:
+                constraint = "uq_users_username_lower"
+            elif "email" in msg:
+                constraint = "uq_users_email"
+            elif "phone" in msg:
+                constraint = "uq_users_phone"
+
+        # now map constraint → field
+        if constraint == "uq_users_username_lower":
+            raise HTTPException(409, "That username is already taken.")
+        elif constraint == "uq_users_email":
+            raise HTTPException(409, "That email address is already in use.")
+        elif constraint == "uq_users_phone":
+            raise HTTPException(409, "That phone number is already registered.")
+        else:
+            # unexpected unique‐violation
+            raise HTTPException(409, "That value is already in use.")
+    # A different exception occured
+    except:
+        db.rollback()
+        raise HTTPException(500, "Something went wrong")
 
 # Change password
 

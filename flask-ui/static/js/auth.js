@@ -48,7 +48,13 @@ window.apiFetch = async function(path, opts = {}) {
   // If there's JSON, parse it; otherwise return the raw Response
   const ct = res.headers.get('Content-Type') || '';
   if (ct.includes('application/json')) {
-    return res.json();
+    try { data = await res.json() } catch {}
   }
-  return res;
+  if (!res.ok) {
+    // pick up the detail field if provided, or fall back
+    const msg = (data && (data.detail || data.message)) || res.statusText;
+    throw new Error(msg);
+  }
+  return data === null ? res : data;
+  
 };
