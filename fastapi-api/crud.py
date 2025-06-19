@@ -44,6 +44,9 @@ def get_user_by_username(db: Session, uname: str) -> Optional[models.User]:
         .first()
     )
 
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.User).get(user_id)
+
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     if get_user_by_username(db, user.username):
         raise HTTPException(status_code=400, detail="Username already taken")
