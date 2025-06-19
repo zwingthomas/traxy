@@ -9,7 +9,7 @@ SMTP_PORT = "587"
 SMTP_USER = secrets_manager.get_secret("SMTP_USER")
 SMTP_PASS = secrets_manager.get_secret("SMTP_PASS")
 WEB_BASE   = "https://www.traxy.app"
-FROM_ADDR = "no-reply@traxy.app"
+FROM_ADDR = "thomas@zwinger.us"
 
 def send_reset_email(token: str, to_email: str):
     reset_link = f"{WEB_BASE}/reset-password?token={token}"
@@ -18,7 +18,7 @@ def send_reset_email(token: str, to_email: str):
     msg["From"]    = FROM_ADDR
     msg["To"]      = to_email
     msg.set_content(
-        f"Click here to reset your password:\n\n{link}\n\n"
+        f"Click here to reset your password:\n\n{reset_link}\n\n"
         "If you didn’t ask, ignore this email."
     )
     msg.add_alternative(f"""

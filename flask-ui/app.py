@@ -178,10 +178,10 @@ def forgot_password():
         token = session.get("token")
         headers = {"Authorization":f"Bearer {token}"} if token else {}
         r = requests.post(
-           f"{API}/password-reset/request",
+           f"{API}/api/auth/password-reset/request",
            headers={**headers, "Content-Type":"application/json"},
            json={"email": email},
-           timeout=5
+           timeout=15
         )
         flash("If that address exists, you’ll get an email shortly", "info")
         return redirect(url_for("login"))
@@ -195,10 +195,10 @@ def reset_password():
     if request.method=="POST":
         new_pw = request.form["new_password"]
         resp = requests.post(
-          f"{API}/password-reset",
+          f"{API}/api/auth/password-reset",
           headers={"Content-Type":"application/json"},
           json={"token": token, "new_password": new_pw},
-          timeout=5
+          timeout=15
         )
         if resp.status_code == 200:
             flash("Your password has been reset. Please log in.", "success")

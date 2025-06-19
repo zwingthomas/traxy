@@ -13,3 +13,5 @@ alembic==1.13.1
 psycopg2-binary
 google-cloud-secret-manager>=2.0.0
 pytz
+bcrypt>=4.0.0
+passlib[bcrypt]>=1.7.4
