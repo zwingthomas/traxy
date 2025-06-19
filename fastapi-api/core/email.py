@@ -1,4 +1,3 @@
-# core/email.py
 import os
 import smtplib
 from email.message import EmailMessage
@@ -19,13 +18,13 @@ def send_reset_email(token: str, to_email: str):
     msg["To"]      = to_email
     msg.set_content(
         f"Click here to reset your password:\n\n{reset_link}\n\n"
-        "If you didn’t ask, ignore this email."
+        "If you didn't ask, ignore this email."
     )
     msg.add_alternative(f"""
     <html>
       <body>
         <p>Click <a href="{reset_link}">this link</a> to reset your Traxy password.</p>
-        <p>If you didn’t ask, you can safely ignore this message.</p>
+        <p>If you didn't ask, you can safely ignore this message.</p>
       </body>
     </html>
     """, subtype="html")
