@@ -202,7 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const payload = {};
     for (const [k, v] of formData.entries()) {
       if (!v) continue;         // skip empty
-      payload[k] = v.trim();    // strip whitespace
+      if (v.trim() !== '') {
+        payload[k] = v.trim();
+      }
     }
     try {
       await window.apiFetch('/api/users/me/profile', {

@@ -94,6 +94,8 @@ def proxy_update_profile():
                      headers={**_auth_headers(),
                               "Content-Type": "application/json"},
                      json=request.get_json(force=True), timeout=5)
+    if r.status_code >= 400:
+        app.logger.error("Profile‐PATCH failed: %s %s", r.status_code, r.text)
     return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
 
 @app.route("/api/users/me/password", methods=["PUT"])

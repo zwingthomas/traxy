@@ -235,16 +235,42 @@ def remove_friend(db: Session, user_id: int, friend_username: str) -> None:
     db.commit()
 
 def update_profile(db: Session, user_id: int, data: schemas.ProfileUpdate):
+    # Dump only the non-None fields
     payload = data.model_dump(exclude_none=True)
-    if 'username' in payload:
-        payload['usernameLower'] = payload['username'].lower()
+
+    # Normalize: drop empty strings so we don't overwrite with ""
+    payload = {
+        k: v for k, v in payload.items()
+        if not (isinstance(v, str) and v.strip() == "")
+    }
+
+    # Load the existing row so we can compare
+    user = db.get(models.User, user_id)
+
+    # If they passed back the same value already in their database, drop it
+    for field, new_val in list(payload.items()):
+        old_val = getattr(user, field, None)
+        if field == "username":
+            # we'll also generate usernameLower a bit later
+            if new_val == old_val:
+                payload.pop(field)
+        else:
+            if new_val == old_val:
+                payload.pop(field)
+
+    # If they really did change username, set usernameLower
+    if "username" in payload:
+        payload["usernameLower"] = payload["username"].lower()
+
     try:
-        db.query(models.User).filter(models.User.id == user_id).update(payload, synchronize_session=False)
-        db.commit()
+        if payload:
+            db.query(models.User)\
+              .filter(models.User.id == user_id)\
+              .update(payload, synchronize_session=False)
+            db.commit()
     # This catches the UNIQUE constraint on username / email / phone
     except IntegrityError as e:
         db.rollback()
-
         # try Postgres-style diag
         constraint = None
         orig = getattr(e, "orig", None)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator, EmailStr, constr
+from pydantic import BaseModel, Field, validator, EmailStr, constr, root_validator
 from datetime import datetime, date, timedelta
 from typing import Annotated, List, Dict, Optional
 from enum import Enum
@@ -90,11 +90,15 @@ class ProfileOut(BaseModel):
     phone:      Optional[str] = None
 
 class ProfileUpdate(BaseModel):
-    username: str
-    first_name: Optional[str] = ""
-    last_name:  Optional[str] = ""
-    email:      Optional[EmailStr] = ""
-    phone:      Optional[str] = ""
+    username:   Optional[str] = None
+    first_name: Optional[str] = None
+    last_name:  Optional[str] = None
+    email:      Optional[EmailStr] = None
+    phone:      Optional[str] = None
+
+    @root_validator(pre=True)
+    def blank_strings_to_none(cls, values):
+        return {k: (v or None) for k, v in values.items()}
 
     class Config:
         # ignore any fields not sent
