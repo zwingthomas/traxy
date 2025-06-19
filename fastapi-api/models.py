@@ -38,6 +38,13 @@ class User(Base):
         secondaryjoin=(friendships.c.friend_id == id),
     )
 
+    reset_tokens    = relationship(
+        "PasswordResetToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+
 class Tracker(Base):
     __tablename__ = 'trackers'
     id = Column(Integer, primary_key=True, index=True)
