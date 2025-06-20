@@ -23,9 +23,10 @@ def favicon():
 @app.route('/signup', methods=['GET','POST'])
 def signup():
     if request.method == 'POST':
-        data = request.form.to_dict()
+        form = request.form.to_dict()
+        payload = {k: v for k, v in form.items() if v}
         try:
-            r = requests.post(f"{API}/api/auth/signup", json=data)
+            r = requests.post(f"{API}/api/auth/signup", json=payload)
             if r.ok:
                 flash("Signup successful! Please log in.", "success")
                 return redirect(url_for('login'))

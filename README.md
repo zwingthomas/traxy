@@ -75,13 +75,13 @@ June 14
 
 ✅ **12 hours** - Allow people to change their password / forget their password
 
-**2 hours** - See your profile as you view it, publicly, and as various groups will see it
+**2 hours** - Make dashboard endpoint be /u/active-user-username instead of /dashboard
 
 ✅ **3 hours** - Make password visibility togglable around the site
 
 ✅ **2 hours** - Set up a development environment (shared DB)
 
-**1 hour** - Request first name, last name, and optionally email and phone on sign up
+✅ **1 hour** - Request optional first name, last name, email and phone on sign up
 
 ✅ **8 hours** - Make username changable along with user's URL endpoint
 
@@ -91,7 +91,7 @@ June 21
 
 **6 hours** - Email and phone verification
 
-**2 hours** - Make dashboard endpoint be /u/active-user-username instead of /dashboard
+**2 hours** - See your profile as you view it, publicly, and as various groups will see it
 
 **6 - 10 hours** - Make adding friends, friend requests. Have another icon similar to friend badge next to it with friend requests
 
@@ -135,7 +135,7 @@ July 19
 
 **8 hours** - Shared trackers
 
-**12 hours** - Be able to group trackers and have a overview as well
+**12 hours** - Be able to group trackers and have an overview as well
 
 
 July 26

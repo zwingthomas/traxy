@@ -4,7 +4,7 @@
 <div class="flex items-start justify-center min-h-screen bg-gray-50 pt-16">
   <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-lg mt-8">
     <h2 class="text-3xl font-bold text-center text-indigo-600 mb-6">Create Your Account</h2>
-    <form class="space-y-4">
+    <form id="signup-form" class="space-y-4">
       <div>
         <label class="block text-gray-700 font-medium mb-1">Username</label>
         <input type="text" name="username" required placeholder="Your username"
@@ -51,7 +51,7 @@
           </button>
         </div>
       </div>
-      <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2 rounded hover:bg-indigo-700 transition">
+      <button type="button" id="signup-next" class="w-full bg-indigo-600 text-white font-semibold py-2 rounded hover:bg-indigo-700 transition">
         Sign Up
       </button>
     </form>
@@ -62,7 +62,7 @@
 </div>
 
 <div id="post-signup-overlay"
-     class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+     class="fixed inset-0 flex bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
   <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
     <h3 class="text-xl font-semibold">Complete your profile <span class="text-sm text-gray-500">(optional)</span></h3>
     <p class="text-gray-600">You can fill in any of these now, or skip straight to login.</p>
@@ -80,9 +80,9 @@
       <input name="phone" type="tel" placeholder="Phone number"
              class="w-full border rounded px-3 py-2" />
       <div class="flex justify-end space-x-3 pt-2">
-        <button type="button" id="skip-profile"
+        <button type="submit" id="skip-profile"
                 class="text-gray-600 hover:underline">Skip &amp; Login</button>
-        <button type="button" id="continue-login"
+        <button type="submit" id="continue-login"
                 class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
           Continue to login →
         </button>
