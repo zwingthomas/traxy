@@ -6,6 +6,14 @@ from enum import Enum
 class UserCreate(BaseModel):
     username: Annotated[str, Field(min_length=3)]
     password: Annotated[str, Field(min_length=6)]
+    first_name: Optional[str]    = None
+    last_name:  Optional[str]    = None
+    email:      Optional[EmailStr] = None
+    phone:      Optional[str]    = None
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class FriendOut(BaseModel):
     id: int

@@ -81,13 +81,13 @@ June 14
 
 ✅ **2 hours** - Set up a development environment (shared DB)
 
-**4 hours** - Show error dynamically if username is already taken when signing up
-
 **1 hour** - Request first name, last name, and optionally email and phone on sign up
 
 ✅ **8 hours** - Make username changable along with user's URL endpoint
 
 June 21
+
+**4 hours** - Show error dynamically if username is already taken when signing up
 
 **6 hours** - Email and phone verification
 
@@ -140,7 +140,7 @@ July 19
 
 July 26
 
-**15 - 25 hours** - Shared trackers
+**7 - 18 hours** - Shared trackers
 
 
 August 2

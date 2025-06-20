@@ -53,11 +53,23 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     db_user = models.User(
         username=user.username,
         usernameLower=func.lower(user.username),
-        hashed_password=get_password_hash(user.password)
+        hashed_password=get_password_hash(user.password),
+
+        # the following may be None
+        first_name     = user.first_name,
+        last_name      = user.last_name,
+        email          = user.email,
+        phone          = user.phone
     )
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    try:
+        db.commit()
+        db.refresh(db_user)
+    except IntegrityError as e:
+        db.rollback()
+        # you can catch UNIQUE‐constraint on email/phone here
+        # and reraise HTTPException(409, …) if you like
+        raise
     return db_user
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[models.User]:

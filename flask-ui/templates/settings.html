@@ -232,10 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'PUT',
         body: JSON.stringify({ old_password, new_password })
       });
-      if (r.ok) {
-        alert('Password changed.');
-        pwdForm.reset();
-      }
+      alert('Password changed.');
+      pwdForm.reset();
     } catch (err) {
       console.error('Password change failed:', err);
       alert('Could not change password.');
