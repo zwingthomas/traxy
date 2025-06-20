@@ -10,6 +10,8 @@ class UserCreate(BaseModel):
 class FriendOut(BaseModel):
     id: int
     username: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
     model_config = {
         "from_attributes": True
@@ -18,6 +20,8 @@ class FriendOut(BaseModel):
 class UserOut(BaseModel):
     id: int
     username: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     friends: List[FriendOut] = Field(
         default_factory=list,
         description="List of this user’s friends"

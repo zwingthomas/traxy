@@ -106,7 +106,7 @@ def update_my_password(payload: schemas.PasswordChange, db: Session = Depends(de
 def search_users(prefix: str, db: Session = Depends(deps.get_db)):
     return crud.search_users_by_prefix(db, prefix, limit=10)
 
-@router.get("/{username}/friends", response_model=list[schemas.UserOut])
+@router.get("/{username}/friends", response_model=List[schemas.FriendOut])
 def read_user_friends(
     username: str,
     db: Session = Depends(deps.get_db),

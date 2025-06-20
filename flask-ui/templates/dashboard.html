@@ -4,7 +4,7 @@
 
 <div class="container mx-auto px-6 py-8">
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
-    Hello, {{ user.username }}!
+    Hello, {{ user.first_name or user.username }}!
     <span id="friend-badge"
           class="inline-flex items-center gap-1 px-3 py-1 rounded-full
                 text-sm font-medium bg-blue-100 text-blue-700
@@ -445,15 +445,21 @@
     function renderList(friends){
       countEl.textContent = friends.length;
       listUL.innerHTML = friends.length
-        ? friends.map(u => `
+        ? friends.map(u => {
+          const name = u.first_name
+          ? `${u.first_name} ${u.last_name || ''}`.trim()
+          : u.username;
+            return `
             <li data-username="${u.username}"
                 class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
               <a href="/u/${u.username}" class="no-underline flex items-center gap-3">
-                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${u.username[0]}</span>
-                <span class="text-gray-800">${u.username}</span>
+                // single letter avatar
+                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${name[0]}</span>
+                // the name
+                <span class="text-gray-800">${name}</span>
               </a>
             </li>
-          `).join('')
+          `}).join('')
         : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
     }
 

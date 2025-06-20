@@ -71,18 +71,25 @@ Browse the public profile of **zwingthomas** on App Engine Standard and Cloud Ru
 
 June 14
 
-**2 hours** - Have First Name / Last Name / Email / Phone
+✅ **2 hours** - Have First Name / Last Name / Email / Phone
 
-**12 hours** - Allow people to change their password / forget their password
+✅ **12 hours** - Allow people to change their password / forget their password
 
 **2 hours** - See your profile as you view it, publicly, and as various groups will see it
 
+✅ **3 hours** - Make password visibility togglable around the site
+
+✅ **2 hours** - Set up a development environment (shared DB)
+
 **4 hours** - Show error dynamically if username is already taken when signing up
 
+**1 hour** - Request first name, last name, and optionally email and phone on sign up
+
+✅ **8 hours** - Make username changable along with user's URL endpoint
 
 June 21
 
-**6 - 12 hours** - Database migration to VM
+**6 hours** - Email and phone verification
 
 **2 hours** - Make dashboard endpoint be /u/active-user-username instead of /dashboard
 
@@ -108,6 +115,8 @@ July 5
 
 **10 hours** - Implement testing frameworks
 
+**6 - 12 hours** - Database migration to VM
+
 
 July 12
 
@@ -124,7 +133,7 @@ July 12
 
 July 19
 
-**8 hours** - Make username changable along with user's URL endpoint
+**8 hours** - Shared trackers
 
 **12 hours** - Be able to group trackers and have a overview as well
 
