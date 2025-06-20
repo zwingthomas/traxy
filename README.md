@@ -70,8 +70,7 @@ Browse the public profile of **zwingthomas** on App Engine Standard and Cloud Ru
 
 **2 hours** - Be able to reset user information to nothing in settings
 **1 hour** - Delete account
-**4 hours** - Show error dynamically if username or email is already taken when signing up
-
+**2 hours** - Add days of week to calendar somehow
 
 
 
@@ -98,7 +97,7 @@ June 14
 
 June 21
 
-
+**4 hours** - Show error dynamically if username, email, or phone is already taken when signing up
 
 **6 hours** - Email and phone verification
 
@@ -201,7 +200,7 @@ September 20, 27
 
 Oct, Nov, Dec
 
-**60 - 80 hours** hours - Journalling/blog epic
+**60 - 80 hours** - Journalling/blog epic
 
 
 2026
