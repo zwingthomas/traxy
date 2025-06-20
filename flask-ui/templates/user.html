@@ -180,16 +180,19 @@
       function renderList(friends){
         countEl.textContent = friends.length;
         listUL.innerHTML = friends.length
-          ? friends.map(u => `
-            <a href="/u/${u.username}" class="no-underline">
-              <li class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
-                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full
-                            bg-blue-500 text-white uppercase text-sm no-underline">
-                  ${u.username[0]}
-                </span>
-                <span class="text-gray-800">${u.username}</span>
+          ? friends.map(u => {
+            const name = u.first_name
+            ? `${u.first_name} ${u.last_name || ''}`.trim()
+            : u.username;
+              return `
+              <li data-username="${u.username}"
+                  class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
+                <a href="/u/${u.username}" class="no-underline flex items-center gap-3">
+                  <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${name[0]}</span>
+                  <span class="text-gray-800">${name}</span>
+                </a>
               </li>
-            </a>`).join('')
+            `}).join('')
           : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
       }
 
