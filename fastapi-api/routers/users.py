@@ -1,7 +1,9 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-import crud, schemas, deps
+import crud
+import schemas
+import deps
 from typing import List
 
 router = APIRouter(prefix='/api/users', tags=['users'])
@@ -16,6 +18,7 @@ def read_current_user(
     logger.info("read_current_user called, user_id=%s", current.id)
     return current
 
+
 @router.patch("/me", response_model=schemas.UserOut)
 def update_me(
     patch: dict,
@@ -29,18 +32,22 @@ def update_me(
         db.refresh(current)
     return current
 
+
 @router.get("/me/profile", response_model=schemas.ProfileOut)
-def read_my_profile(current = Depends(deps.get_current_user)):
+def read_my_profile(current=Depends(deps.get_current_user)):
     return current  # FastAPI will filter via the schema
 
+
 @router.patch("/me/profile", response_model=schemas.ProfileOut)
-def update_my_profile(payload: schemas.ProfileUpdate, db: Session = Depends(deps.get_db), current = Depends(deps.get_current_user)):
+def update_my_profile(payload: schemas.ProfileUpdate, db: Session = Depends(deps.get_db), current=Depends(deps.get_current_user)):
     crud.update_profile(db, current.id, payload)
     return crud.get_user_by_id(db, current.id)
 
+
 @router.put("/me/password", status_code=204)
-def update_my_password(payload: schemas.PasswordChange, db: Session = Depends(deps.get_db), current = Depends(deps.get_current_user)):
-    crud.change_password(db, current, payload.old_password, payload.new_password)
+def update_my_password(payload: schemas.PasswordChange, db: Session = Depends(deps.get_db), current=Depends(deps.get_current_user)):
+    crud.change_password(db, current, payload.old_password,
+                         payload.new_password)
 
 
 # @router.get(
@@ -101,16 +108,17 @@ def update_my_password(payload: schemas.PasswordChange, db: Session = Depends(de
 #         )
 #         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
 #                             detail="Internal server error")
-    
+
 @router.get("/search", response_model=List[schemas.UserOut])
 def search_users(prefix: str, db: Session = Depends(deps.get_db)):
     return crud.search_users_by_prefix(db, prefix, limit=10)
+
 
 @router.get("/{username}/friends", response_model=List[schemas.FriendOut])
 def read_user_friends(
     username: str,
     db: Session = Depends(deps.get_db),
-    current    = Depends(deps.get_current_user_optional)   # may be None (anonymous)
+    current=Depends(deps.get_current_user_optional)   # may be None (anonymous)
 ):
     user = crud.get_user_by_username(db, username)
     if not user:
@@ -133,17 +141,18 @@ def read_user_friends(
 def add_friend(
     username: str,
     db: Session = Depends(deps.get_db),
-    current    = Depends(deps.get_current_user)
+    current=Depends(deps.get_current_user)
 ):
     crud.add_friend(db, current.id, username)
     return {"added": username}
+
 
 @router.delete("/{username}/friends")
 def delete_friend(
     username: str,
     username_to_remove: str = Query(..., alias="username"),
     db: Session = Depends(deps.get_db),
-    current = Depends(deps.get_current_user),
+    current=Depends(deps.get_current_user),
 ):
     # current.username is “you”
     crud.remove_friend(db, current.id, username_to_remove)

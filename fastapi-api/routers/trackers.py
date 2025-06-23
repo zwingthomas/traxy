@@ -1,7 +1,9 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
-import crud, schemas, deps
+import crud
+import schemas
+import deps
 from typing import List
 
 router = APIRouter(prefix='/api/trackers', tags=['trackers'])
@@ -18,19 +20,22 @@ def list_trackers(
     logger.info("list_trackers called by user_id=%s", current.id)
     try:
         trackers = crud.get_trackers_for_user(db, current.id,
-                                              ['private','friends','public'],
+                                              ['private', 'friends', 'public'],
                                               current)
         out = []
         for t in trackers:
             t_dict = schemas.TrackerOut.from_orm(t).dict()
             t_dict['aggregate'] = crud.get_daily_aggregates(db, t.id)
             out.append(t_dict)
-        logger.info("list_trackers returning %d items for user_id=%s", len(out), current.id)
+        logger.info("list_trackers returning %d items for user_id=%s",
+                    len(out), current.id)
         return out
 
     except Exception as e:
-        logger.exception("Error in list_trackers for user_id=%s: %s", current.id, e)
+        logger.exception(
+            "Error in list_trackers for user_id=%s: %s", current.id, e)
         raise HTTPException(500, "Internal server error")
+
 
 @router.get(
     "/{username}/trackers",
@@ -72,21 +77,26 @@ def read_user_trackers(
 
     return out
 
+
 @router.post('', response_model=schemas.TrackerOut)
 def create_tracker(
     t: schemas.TrackerCreate,
     db: Session = Depends(deps.get_db),
     current=Depends(deps.get_current_user)
 ):
-    logger.info("create_tracker called by user_id=%s payload=%s", current.id, t.dict())
+    logger.info("create_tracker called by user_id=%s payload=%s",
+                current.id, t.dict())
     try:
         new = crud.create_tracker(db, current.id, t)
-        logger.info("create_tracker succeeded id=%s for user_id=%s", new.id, current.id)
+        logger.info("create_tracker succeeded id=%s for user_id=%s",
+                    new.id, current.id)
         return new
 
     except Exception as e:
-        logger.exception("Error in create_tracker for user_id=%s: %s", current.id, e)
+        logger.exception(
+            "Error in create_tracker for user_id=%s: %s", current.id, e)
         raise HTTPException(500, "Internal server error")
+
 
 @router.put("/reorder", status_code=204)
 def reorder_trackers(
@@ -96,6 +106,7 @@ def reorder_trackers(
 ):
     crud.reorder_trackers(db, current.id, payload.ordered_ids)
     return Response(status_code=204)
+
 
 @router.put('/{tracker_id}', response_model=schemas.TrackerOut)
 def update_tracker(
@@ -108,7 +119,8 @@ def update_tracker(
                 current.id, tracker_id, t.dict())
     try:
         updated = crud.update_tracker(db, current.id, tracker_id, t)
-        logger.info("update_tracker succeeded id=%s for user_id=%s", updated.id, current.id)
+        logger.info("update_tracker succeeded id=%s for user_id=%s",
+                    updated.id, current.id)
         return updated
 
     except HTTPException:
@@ -128,10 +140,12 @@ def delete_tracker(
     db: Session = Depends(deps.get_db),
     current=Depends(deps.get_current_user)
 ):
-    logger.info("delete_tracker called by user_id=%s tracker_id=%s", current.id, tracker_id)
+    logger.info("delete_tracker called by user_id=%s tracker_id=%s",
+                current.id, tracker_id)
     try:
         crud.delete_tracker(db, current.id, tracker_id)
-        logger.info("delete_tracker succeeded for user_id=%s tracker_id=%s", current.id, tracker_id)
+        logger.info(
+            "delete_tracker succeeded for user_id=%s tracker_id=%s", current.id, tracker_id)
     except HTTPException:
         logger.warning("delete_tracker not found or unauthorized: user_id=%s tracker_id=%s",
                        current.id, tracker_id)

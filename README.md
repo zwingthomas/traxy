@@ -69,8 +69,16 @@ Browse the public profile of **zwingthomas** on App Engine Standard and Cloud Ru
 ###
 
 **2 hours** - Be able to reset user information to nothing in settings
+
 **1 hour** - Delete account
+
 **2 hours** - Add days of week to calendar somehow
+
+**20 hours** - Full IdP sign up: Google, Apple, Github, X, LinkedIn, Meta, Microsoft
+
+**30 hours** - After everything is done, make it pretty (UI/UX - three.js)
+
+**10 hours** - Add photos of habits like Gymrats
 
 
 

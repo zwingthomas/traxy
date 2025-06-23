@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-window.apiFetch = async function(path, opts = {}) {
+window.apiFetch = async function (path, opts = {}) {
   const token = sessionStorage.getItem('token');
   // Merge headers
   const headers = {
     'Content-Type': 'application/json',
-    ...(opts.headers || {})
+    ...(opts.headers || {}),
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -31,7 +31,7 @@ window.apiFetch = async function(path, opts = {}) {
   const res = await fetch(API_BASE + path, {
     ...opts,
     headers,
-    credentials: 'include'    // send Flask session cookie
+    credentials: 'include', // send Flask session cookie
   });
 
   if (res.status === 401) {
@@ -48,7 +48,9 @@ window.apiFetch = async function(path, opts = {}) {
   // If there's JSON, parse it; otherwise return the raw Response
   const ct = res.headers.get('Content-Type') || '';
   if (ct.includes('application/json')) {
-    try { data = await res.json() } catch {}
+    try {
+      data = await res.json();
+    } catch {}
   }
   if (!res.ok) {
     // pick up the detail field if provided, or fall back
@@ -56,5 +58,4 @@ window.apiFetch = async function(path, opts = {}) {
     throw new Error(msg);
   }
   return data === null ? res : data;
-  
 };

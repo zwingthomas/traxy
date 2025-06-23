@@ -1,244 +1,251 @@
-{% extends 'base.html' %}
-{% block title %}Settings{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% block title %}Settings{% endblock %} {% block
+content %}
 <div class="max-w-lg mx-auto bg-white shadow rounded-xl p-6 space-y-8">
-    <h2 class="text-2xl font-semibold">Account settings</h2>
+  <h2 class="text-2xl font-semibold">Account settings</h2>
 
-    <!-- Profile form -->
-    <form class="space-y-4" id="profile-form">
-        <!-- first & last name side-by-side on md+ -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-                type="text"
-                name="first_name"
-                placeholder="First name"
-                value="{{ profile.first_name or '' }}"
-                class="w-full border rounded px-3 py-2"
-            />
-            <input
-                type="text"
-                name="last_name"
-                placeholder="Last name"
-                value="{{ profile.last_name or '' }}"
-                class="w-full border rounded px-3 py-2"
-            />
-        </div>
-      
-        <input
-          type="text"
-          name="username"
-          placeholder="Username / URL endpoint"
-          value="{{ profile.username }}"
-          class="w-full border rounded px-3 py-2"
-        />
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value="{{ profile.email or '' }}"
-          class="w-full border rounded px-3 py-2"
-        />
-      
-        <input
-          type="tel"
-          name="phone"
-          placeholder="Phone"
-          value="{{ profile.phone or '' }}"
-          class="w-full border rounded px-3 py-2"
-        />
-      
-        <button
-          type="submit"
-          class="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Save changes
-        </button>
-    </form>
-    <div class="relative">
-        <form id="password-form" class="space-y-4">
-            <!-- Current password -->
-            <div class="relative">
-              <input
-                id="old_password"
-                name="old_password"
-                type="password"
-                placeholder="Current password"
-                class="w-full border rounded px-3 py-2 pr-10"
-              />
-              <button
-                type="button"
-                aria-label="Show or hide password"
-                class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <!-- Eye open: outline + pupil -->
-                <svg
-                  class="eye-open-icon hidden h-6 w-6 text-gray-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" stroke-width="2"
-                >
-                  <!-- outline -->
-                  <path
-                    stroke-linecap="round" stroke-linejoin="round"
-                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                  />
-                  <!-- pupil -->
-                  <circle cx="12" cy="12" r="3" fill="currentColor" />
-                </svg>
-                <!-- Eye closed: outline only -->
-                <svg
-                  class="eye-closed-icon h-6 w-6 text-gray-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" stroke-width="2"
-                >
-                  <!-- outline -->
-                  <path
-                    stroke-linecap="round" stroke-linejoin="round"
-                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                  />
-                </svg>
-              </button>
-            </div>
-          
-            <!-- New password -->
-            <div class="relative">
-              <input
-                id="new_password"
-                name="new_password"
-                type="password"
-                placeholder="New password"
-                class="w-full border rounded px-3 py-2 pr-10"
-              />
-              <button
-                type="button"
-                aria-label="Show or hide password"
-                class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <!-- Eye open: outline + pupil -->
-                <svg
-                  class="eye-open-icon hidden h-6 w-6 text-gray-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" stroke-width="2"
-                >
-                  <!-- outline -->
-                  <path
-                    stroke-linecap="round" stroke-linejoin="round"
-                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                  />
-                  <!-- pupil -->
-                  <circle cx="12" cy="12" r="3" fill="currentColor" />
-                </svg>
-                <!-- Eye closed: outline only -->
-                <svg
-                  class="eye-closed-icon h-6 w-6 text-gray-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor" stroke-width="2"
-                >
-                  <!-- outline -->
-                  <path
-                    stroke-linecap="round" stroke-linejoin="round"
-                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                  />
-                </svg>
-              </button>
-            </div>
-          
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-              Change password
-            </button>
-        </form>
+  <!-- Profile form -->
+  <form class="space-y-4" id="profile-form">
+    <!-- first & last name side-by-side on md+ -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input
+        type="text"
+        name="first_name"
+        placeholder="First name"
+        value="{{ profile.first_name or '' }}"
+        class="w-full border rounded px-3 py-2"
+      />
+      <input
+        type="text"
+        name="last_name"
+        placeholder="Last name"
+        value="{{ profile.last_name or '' }}"
+        class="w-full border rounded px-3 py-2"
+      />
     </div>
 
-    <!-- Password script to be able to toggle password from ******* to plaintext to double check password before submitting -->
-    <script>
-        document.querySelectorAll('.toggle-password').forEach(btn => {
-          btn.addEventListener('click', () => {
-            // find the sibling input in the same wrapper
-            const wrapper = btn.closest('.relative');
-            const input   = wrapper.querySelector('input');
-            const eyeOpen = wrapper.querySelector('.eye-open-icon');
-            const eyeOff  = wrapper.querySelector('.eye-closed-icon');
-      
-            // toggle the input type
-            const hiding = input.type === 'password';
-            input.type = hiding ? 'text' : 'password';
-      
-            // swap icons
-            eyeOpen.classList.toggle('hidden');
-            eyeOff.classList.toggle('hidden');
-          });
-        });
-    </script>
+    <input
+      type="text"
+      name="username"
+      placeholder="Username / URL endpoint"
+      value="{{ profile.username }}"
+      class="w-full border rounded px-3 py-2"
+    />
+
+    <input
+      type="email"
+      name="email"
+      placeholder="Email"
+      value="{{ profile.email or '' }}"
+      class="w-full border rounded px-3 py-2"
+    />
+
+    <input
+      type="tel"
+      name="phone"
+      placeholder="Phone"
+      value="{{ profile.phone or '' }}"
+      class="w-full border rounded px-3 py-2"
+    />
+
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+      Save changes
+    </button>
+  </form>
+  <div class="relative">
+    <form id="password-form" class="space-y-4">
+      <!-- Current password -->
+      <div class="relative">
+        <input
+          id="old_password"
+          name="old_password"
+          type="password"
+          placeholder="Current password"
+          class="w-full border rounded px-3 py-2 pr-10"
+        />
+        <button
+          type="button"
+          aria-label="Show or hide password"
+          class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center"
+        >
+          <!-- Eye open: outline + pupil -->
+          <svg
+            class="eye-open-icon hidden h-6 w-6 text-gray-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <!-- outline -->
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+            />
+            <!-- pupil -->
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+          <!-- Eye closed: outline only -->
+          <svg
+            class="eye-closed-icon h-6 w-6 text-gray-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <!-- outline -->
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- New password -->
+      <div class="relative">
+        <input
+          id="new_password"
+          name="new_password"
+          type="password"
+          placeholder="New password"
+          class="w-full border rounded px-3 py-2 pr-10"
+        />
+        <button
+          type="button"
+          aria-label="Show or hide password"
+          class="toggle-password absolute inset-y-0 right-0 pr-3 flex items-center"
+        >
+          <!-- Eye open: outline + pupil -->
+          <svg
+            class="eye-open-icon hidden h-6 w-6 text-gray-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <!-- outline -->
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+            />
+            <!-- pupil -->
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+          <!-- Eye closed: outline only -->
+          <svg
+            class="eye-closed-icon h-6 w-6 text-gray-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <!-- outline -->
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+        Change password
+      </button>
+    </form>
+  </div>
+
+  <!-- Password script to be able to toggle password from ******* to plaintext to double check password before submitting -->
+  <script>
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // find the sibling input in the same wrapper
+        const wrapper = btn.closest('.relative');
+        const input = wrapper.querySelector('input');
+        const eyeOpen = wrapper.querySelector('.eye-open-icon');
+        const eyeOff = wrapper.querySelector('.eye-closed-icon');
+
+        // toggle the input type
+        const hiding = input.type === 'password';
+        input.type = hiding ? 'text' : 'password';
+
+        // swap icons
+        eyeOpen.classList.toggle('hidden');
+        eyeOff.classList.toggle('hidden');
+      });
+    });
+  </script>
 </div>
 
-
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Load the current profile and pre-fill the form
-  (async function loadProfile() {
-    try {
-      const me = await window.apiFetch('/api/users/me/profile');
-      Object.entries(me).forEach(([key, val]) => {
-        const fld = document.querySelector(`#profile-form [name="${key}"]`);
-        if (fld) fld.value = val ?? '';
-      });
-    } catch (err) {
-      console.error('Could not load profile:', err);
-      // TODO: show a toast
-    }
-  })();
-
-  // Hook up profile‐form submission
-  const profileForm = document.getElementById('profile-form');
-  profileForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    // pick up only the fields to change
-    const formData = new FormData(profileForm);
-    const payload = {};
-    for (const [k, v] of formData.entries()) {
-      if (!v) continue;         // skip empty
-      if (v.trim() !== '') {
-        payload[k] = v.trim();
+  document.addEventListener('DOMContentLoaded', () => {
+    // Load the current profile and pre-fill the form
+    (async function loadProfile() {
+      try {
+        const me = await window.apiFetch('/api/users/me/profile');
+        Object.entries(me).forEach(([key, val]) => {
+          const fld = document.querySelector(`#profile-form [name="${key}"]`);
+          if (fld) fld.value = val ?? '';
+        });
+      } catch (err) {
+        console.error('Could not load profile:', err);
+        // TODO: show a toast
       }
-    }
-    try {
-      await window.apiFetch('/api/users/me/profile', {
-        method: 'PATCH',
-        body: JSON.stringify(payload),
-      });
-      alert('Profile updated.');
-    } catch (err) {
-      alert(err.message);
-    }
-  });;
+    })();
 
-  const pwdForm = document.getElementById('password-form');
-  pwdForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const { old_password, new_password } =
-      Object.fromEntries(new FormData(pwdForm));
+    // Hook up profile‐form submission
+    const profileForm = document.getElementById('profile-form');
+    profileForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      // pick up only the fields to change
+      const formData = new FormData(profileForm);
+      const payload = {};
+      for (const [k, v] of formData.entries()) {
+        if (!v) continue; // skip empty
+        if (v.trim() !== '') {
+          payload[k] = v.trim();
+        }
+      }
+      try {
+        await window.apiFetch('/api/users/me/profile', {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        alert('Profile updated.');
+      } catch (err) {
+        alert(err.message);
+      }
+    });
 
-    if (!old_password || !new_password) {
-      return alert('Please fill out both password fields.');
-    }
+    const pwdForm = document.getElementById('password-form');
+    pwdForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const { old_password, new_password } = Object.fromEntries(
+        new FormData(pwdForm)
+      );
 
-    try {
-      r = await window.apiFetch('/api/users/me/password', {
-        method: 'PUT',
-        body: JSON.stringify({ old_password, new_password })
-      });
-      alert('Password changed.');
-      pwdForm.reset();
-    } catch (err) {
-      console.error('Password change failed:', err);
-      alert('Could not change password.');
-    }
+      if (!old_password || !new_password) {
+        return alert('Please fill out both password fields.');
+      }
+
+      try {
+        r = await window.apiFetch('/api/users/me/password', {
+          method: 'PUT',
+          body: JSON.stringify({ old_password, new_password }),
+        });
+        alert('Password changed.');
+        pwdForm.reset();
+      } catch (err) {
+        console.error('Password change failed:', err);
+        alert('Could not change password.');
+      }
+    });
   });
-});
 </script>
 {% endblock %}

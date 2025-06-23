@@ -3,7 +3,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-import crud, database, models
+import crud
+import database
+import models
 from typing import Optional
 
 import secrets_manager
@@ -16,7 +18,9 @@ def get_db():
     finally:
         db.close()
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exc = HTTPException(
@@ -26,7 +30,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         SECRET_KEY = secrets_manager.get_secret('BACKEND_SECRET_KEY')
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[os.getenv('ALGORITHM', 'HS256')])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[
+                             os.getenv('ALGORITHM', 'HS256')])
         username: str = payload.get('sub')
         if username is None:
             raise credentials_exc
@@ -37,10 +42,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exc
     return user
 
+
 oauth2_scheme_optional = OAuth2PasswordBearer(
     tokenUrl="/api/auth/login",
     auto_error=False,
 )
+
 
 def get_current_user_optional(
     token: Optional[str] = Depends(oauth2_scheme_optional),

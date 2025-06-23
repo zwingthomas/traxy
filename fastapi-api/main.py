@@ -1,7 +1,12 @@
 from fastapi import FastAPI
-import routers.auth, routers.users, routers.trackers, routers.activities, models
+import routers.auth
+import routers.users
+import routers.trackers
+import routers.activities
+import models
 from fastapi.middleware.cors import CORSMiddleware
 from alembic.config import CommandLine
+
 
 def create_app():
     app = FastAPI()
@@ -12,7 +17,7 @@ def create_app():
     app.include_router(routers.activities.router)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["https://traxy-frontend.ue.r.appspot.com", 
+        allow_origins=["https://traxy-frontend.ue.r.appspot.com",
                        "https://traxy-frontend.uc.r.appspot.com",
                        "https://www.traxy.app",
                        "https://traxy.app"],
@@ -21,5 +26,6 @@ def create_app():
         allow_headers=["*"],
     )
     return app
+
 
 app = create_app()
