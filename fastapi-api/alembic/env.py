@@ -1,13 +1,14 @@
+from models import Base
+import secrets_manager
 import os
 import sys
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
-current_dir = os.path.dirname(os.path.abspath(__file__))  # .../project_root/alembic
+current_dir = os.path.dirname(os.path.abspath(
+    __file__))  # .../project_root/alembic
 parent_dir = os.path.dirname(current_dir)                 # .../project_root
 sys.path.insert(0, parent_dir)
-import secrets_manager
-from models import Base
 
 
 # Alembic Config object
@@ -19,9 +20,9 @@ fileConfig(config.config_file_name)
 # Give Alembic access to your MetaData:
 target_metadata = Base.metadata
 
-db_user       = secrets_manager.get_secret("DB_USER")
-db_pass       = secrets_manager.get_secret("DB_PASS")
-db_name       = secrets_manager.get_secret("DB_NAME")
+db_user = secrets_manager.get_secret("DB_USER")
+db_pass = secrets_manager.get_secret("DB_PASS")
+db_name = secrets_manager.get_secret("DB_NAME")
 connection_id = secrets_manager.get_secret("CLOUD_SQL_CONNECTION_NAME")
 
 if os.getenv("DB_USE_TCP"):
@@ -64,7 +65,8 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(connection=connection,
+                          target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 

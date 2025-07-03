@@ -7,7 +7,5 @@ cloud-sql-proxy \
   --address 127.0.0.1 \
   --port    5432 \
   {CloudSQLConnectionName}
-export GCP_PROJECT_NUMBER=
-export DB_USE_TCP=1
-export DB_HOST=127.0.0.1:5432
+set -a; . ./.env.local; set +a
 alembic revision --autogenerate -m "..."

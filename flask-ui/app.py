@@ -1,14 +1,17 @@
-from flask import Flask, Response, render_template, redirect, url_for, request, session, flash, g
-import os, requests
+from flask import Flask, Response, jsonify, render_template, redirect, url_for, request, session, flash, g
+import os
+import requests
 import secrets_manager
 
 app = Flask(__name__)
 app.secret_key = secrets_manager.get_secret('FRONTEND_SECRET_KEY')
 API = os.getenv('API_BASE_URL')
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/favicon.ico')
 def favicon():
@@ -20,12 +23,14 @@ def favicon():
     )
     return Response(svg, mimetype='image/svg+xml')
 
-@app.route('/signup', methods=['GET','POST'])
+
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        data = request.form.to_dict()
+        form = request.form.to_dict()
+        payload = {k: v for k, v in form.items() if v}
         try:
-            r = requests.post(f"{API}/api/auth/signup", json=data)
+            r = requests.post(f"{API}/api/auth/signup", json=payload)
             if r.ok:
                 flash("Signup successful! Please log in.", "success")
                 return redirect(url_for('login'))
@@ -35,7 +40,8 @@ def signup():
             flash(f"Signup error: {e}", "error")
     return render_template('signup.html')
 
-@app.route('/login', methods=['GET','POST'])
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         creds = request.form.to_dict()
@@ -50,7 +56,7 @@ def login():
         except requests.RequestException as e:
             flash(f"Login error: {e}", "error")
     return render_template('login.html')
-    
+
 
 @app.route('/logout')
 def logout():
@@ -59,7 +65,9 @@ def logout():
     return redirect(url_for('login'))
 
 # maybe delete in the future
-@app.route('/api/users/me', methods=['GET','PATCH'])
+
+
+@app.route('/api/users/me', methods=['GET', 'PATCH'])
 def proxy_users_me():
     token = session.get('token')
     headers = {}
@@ -73,7 +81,166 @@ def proxy_users_me():
                                   headers=headers,
                                   json=request.get_json())
     return (upstream.content, upstream.status_code,
-            [('Content-Type', upstream.headers.get('Content-Type',''))])
+            [('Content-Type', upstream.headers.get('Content-Type', ''))])
+
+
+# Settings
+
+def _auth_headers():
+    token = session.get("token")
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
+@app.route("/api/users/me/profile")
+def proxy_get_profile():
+    r = requests.get(f"{API}/api/users/me/profile",
+                     headers=_auth_headers(), timeout=5)
+    try:
+        return jsonify(r.json()), r.status_code
+    except ValueError:
+        # Fallback for plain text or broken responses
+        headers = _strip_hop_by_hop(r.headers)
+        headers.pop("Content-Encoding", None)
+        headers.pop("Transfer-Encoding", None)
+        headers["Content-Type"] = "text/plain"
+        return Response(response=r.text, status=r.status_code, headers=headers)
+
+
+@app.route("/api/users/me/profile", methods=["PATCH"])
+def proxy_update_profile():
+    r = requests.patch(f"{API}/api/users/me/profile",
+                       headers={**_auth_headers(),
+                                "Content-Type": "application/json"},
+                       json=request.get_json(force=True), timeout=5)
+    if r.status_code >= 400:
+        app.logger.error("Profile‐PATCH failed: %s %s", r.status_code, r.text)
+    try:
+        return jsonify(r.json(), r.status_code)
+    except ValueError:
+        headers = _strip_hop_by_hop(r.headers)
+        headers.pop("Content-Encoding", None)
+        headers.pop("Transfer-Encoding", None)
+        headers["Content-Type"] = "text/plain"
+        return Response(response=r.content, status=r.status_code, headers=headers)
+
+
+@app.route("/api/users/me/password", methods=["PUT"])
+def proxy_change_password():
+    r = requests.put(f"{API}/api/users/me/password",
+                     headers={**_auth_headers(),
+                              "Content-Type": "application/json"},
+                     json=request.get_json(force=True), timeout=5)
+    return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
+
+
+def _strip_hop_by_hop(headers: requests.structures.CaseInsensitiveDict):
+    """Remove headers that Flask/Gunicorn will set for us."""
+    hop = {"Content-Encoding", "Content-Length", "Transfer-Encoding",
+           "Connection"}
+    return [(k, v) for k, v in headers.items() if k not in hop]
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    token = session.get("token")
+    if not token:
+        return redirect("/login")
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    if request.method == "POST":
+        form = request.form.to_dict()
+
+        # profile update
+        profile_payload = {
+            k: v for k, v in form.items()
+            if k in ("first_name", "last_name", "email", "phone") and v
+        }
+        try:
+            # <-- use PUT not PATCH here -->
+            r = requests.put(
+                f"{API}/api/users/me/profile",
+                json=profile_payload,
+                headers=headers,
+                timeout=5,
+            )
+            r.raise_for_status()
+
+            # password change
+            old_pw = form.get("old_password")
+            new_pw = form.get("new_password")
+            if old_pw and new_pw:
+                r2 = requests.put(
+                    f"{API}/api/users/me/password",
+                    json={"old_password": old_pw, "new_password": new_pw},
+                    headers=headers,
+                    timeout=5,
+                )
+                flash(
+                    "Password changed." if r2.ok else "Error changing password",
+                    "success" if r2.ok else "error"
+                )
+
+            flash("Profile updated.", "success")
+        except requests.RequestException as exc:
+            flash(f"Could not update profile: {exc}", "error")
+
+        return redirect(url_for("settings"))
+
+    # GET: load the current profile
+    try:
+        r = requests.get(
+            f"{API}/api/users/me/profile", headers=headers, timeout=5
+        )
+        r.raise_for_status()
+        profile = r.json()
+    except requests.RequestException as exc:
+        flash(f"Could not load profile: {exc}", "error")
+        profile = {}
+
+    return render_template("settings.html", profile=profile)
+
+# Request password reset
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"]
+        token = session.get("token")
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        r = requests.post(
+            f"{API}/api/auth/password-reset/request",
+            headers={**headers, "Content-Type": "application/json"},
+            json={"email": email},
+            timeout=15
+        )
+        flash("If that address exists, you’ll get an email shortly", "info")
+        return redirect(url_for("login"))
+    return render_template("forgot_password.html")
+
+
+# Reset password form
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    token = request.args.get("token") or request.form.get("token")
+    if request.method == "POST":
+        new_pw = request.form["new_password"]
+        resp = requests.post(
+            f"{API}/api/auth/password-reset",
+            headers={"Content-Type": "application/json"},
+            json={"token": token, "new_password": new_pw},
+            timeout=15
+        )
+        if resp.status_code == 200:
+            flash("Your password has been reset. Please log in.", "success")
+            return redirect(url_for("login"))
+        else:
+            flash("Invalid or expired link", "error")
+    return render_template("reset_password.html", token=token)
+
+# Trackers
+
 
 @app.route('/api/trackers')
 def proxy_get_trackers():
@@ -84,7 +251,8 @@ def proxy_get_trackers():
     upstream = requests.get(f"{API}/api/trackers", headers=headers)
 
     if not upstream.ok:
-        app.logger.error("Proxy GET /trackers failed: %s %s", upstream.status_code, upstream.text)
+        app.logger.error("Proxy GET /trackers failed: %s %s",
+                         upstream.status_code, upstream.text)
 
     # Builds a fresh Flask Response with raw bytes and only the Content-Type
     resp = Response(
@@ -93,6 +261,7 @@ def proxy_get_trackers():
         content_type=upstream.headers.get("Content-Type", "application/json"),
     )
     return resp
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -109,7 +278,8 @@ def dashboard():
         if user_resp.ok:
             user = user_resp.json()
         else:
-            flash(f"Error fetching user info: {user_resp.status_code} — {user_resp.text}", "error")
+            flash(
+                f"Error fetching user info: {user_resp.status_code} — {user_resp.text}", "error")
     except requests.RequestException as e:
         flash(f"Error fetching user info: {e}", "error")
 
@@ -119,11 +289,13 @@ def dashboard():
         if tr_resp.ok:
             trackers = tr_resp.json()
         else:
-            flash(f"Error fetching trackers: {tr_resp.status_code} — {tr_resp.text}", "error")
+            flash(
+                f"Error fetching trackers: {tr_resp.status_code} — {tr_resp.text}", "error")
     except requests.RequestException as e:
         flash(f"Error fetching trackers: {e}", "error")
 
     return render_template('dashboard.html', user=user, trackers=trackers)
+
 
 @app.route('/new-tracker', methods=['POST'])
 def new_tracker():
@@ -133,15 +305,15 @@ def new_tracker():
         return redirect(url_for('login'))
 
     # Gather form inputs
-    title       = request.form.get('title')
-    color       = request.form.get('color')
-    rule_count  = int(request.form.get('rule_count', 1))
+    title = request.form.get('title')
+    color = request.form.get('color')
+    rule_count = int(request.form.get('rule_count', 1))
     rule_period = request.form.get('rule_period')
-    visibility  = request.form.get('visibility')
+    visibility = request.form.get('visibility')
     widget_type = request.form.get('widget_type')
 
     # Build the rule dict: { period: count }
-    rule = { rule_period: rule_count }
+    rule = {rule_period: rule_count}
 
     payload = {
         "name":       title,
@@ -160,11 +332,13 @@ def new_tracker():
         if r.ok:
             flash("Tracker created successfully!", "success")
         else:
-            flash(f"Error creating tracker: {r.status_code} — {r.text}", "error")
+            flash(
+                f"Error creating tracker: {r.status_code} — {r.text}", "error")
     except requests.RequestException as e:
         flash(f"Error creating tracker: {e}", "error")
 
     return redirect(url_for('dashboard'))
+
 
 @app.route('/delete-tracker/<int:tid>', methods=['DELETE'])
 def delete_tracker_proxy(tid):
@@ -178,7 +352,8 @@ def delete_tracker_proxy(tid):
     except requests.RequestException as e:
         flash(f"Error deleting tracker: {e}", "error")
         return (str(e), 500)
-    
+
+
 @app.route('/trackers/reorder', methods=['PUT'])
 def proxy_reorder_trackers():
     token = session.get('token')
@@ -193,14 +368,15 @@ def proxy_reorder_trackers():
     }
 
     r = requests.put(f"{API}/api/trackers/reorder",
-                            json=payload,
-                            headers=headers)
+                     json=payload,
+                     headers=headers)
 
     if not r.ok:
         app.logger.error("Proxy PUT /trackers/reorder failed: %s %s",
                          r.status_code, r.text)
 
     return (r.content, r.status_code, r.headers.items())
+
 
 @app.route('/record-activity', methods=['POST'])
 def record_activity_proxy():
@@ -210,15 +386,17 @@ def record_activity_proxy():
 
     payload = request.get_json()
     headers = {
-      "Authorization": f"Bearer {token}",
-      "Content-Type": "application/json"
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
     }
     try:
-        r = requests.post(f"{API}/api/activities", json=payload, headers=headers)
+        r = requests.post(f"{API}/api/activities",
+                          json=payload, headers=headers)
         return (r.text, r.status_code, r.headers.items())
     except requests.RequestException as e:
         return (str(e), 500)
-    
+
+
 @app.route('/api/activities/reset', methods=['DELETE'])
 def proxy_reset_activity():
     token = session.get("token")
@@ -228,18 +406,20 @@ def proxy_reset_activity():
     tracker_id = request.args.get("tracker_id")
     if not tracker_id:
         return ("Missing tracker_id", 400)
-    
+
     day = request.args.get("day")
     if not day:
         return ("Missing day", 400)
 
     headers = {"Authorization": f"Bearer {token}"}
     try:
-        r = requests.delete(f"{API}/api/activities/reset?tracker_id={tracker_id}&day={day}", headers=headers)
+        r = requests.delete(
+            f"{API}/api/activities/reset?tracker_id={tracker_id}&day={day}", headers=headers)
         return (r.text, r.status_code, r.headers.items())
     except requests.RequestException as e:
         flash(f"Error reseting today's activity: {e}", "error")
         return (str(e), 500)
+
 
 @app.route('/update-tracker/<int:tid>', methods=['POST'])
 def update_tracker_proxy(tid):
@@ -248,11 +428,11 @@ def update_tracker_proxy(tid):
         return ("", 401)
 
     # Read form‐encoded fields:
-    title       = request.form.get('title')
-    color       = request.form.get('color')
-    rule_count  = request.form.get('rule_count')
+    title = request.form.get('title')
+    color = request.form.get('color')
+    rule_count = request.form.get('rule_count')
     rule_period = request.form.get('rule_period')
-    visibility  = request.form.get('visibility')
+    visibility = request.form.get('visibility')
     widget_type = request.form.get('widget_type')
 
     # Basic checks:
@@ -281,7 +461,8 @@ def update_tracker_proxy(tid):
     }
 
     try:
-        r = requests.put(f"{API}/api/trackers/{tid}", json=payload, headers=headers)
+        r = requests.put(f"{API}/api/trackers/{tid}",
+                         json=payload, headers=headers)
         if r.status_code >= 200 and r.status_code < 300:
             # On success, redirect the user back to the dashboard
             return redirect(url_for('dashboard'))
@@ -292,6 +473,7 @@ def update_tracker_proxy(tid):
         flash(f"Error updating tracker metadata: {e}", "error")
         return redirect(url_for('dashboard'))
 
+
 @app.route('/u/<username>')
 def public_profile(username):
     try:
@@ -300,18 +482,21 @@ def public_profile(username):
         if token:
             headers['Authorization'] = f"Bearer {token}"
 
-        r = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
+        r = requests.get(
+            f"{API}/api/trackers/{username}/trackers", headers=headers)
         if r.status_code == 404:
             flash("User not found.", "warning")
             return redirect(url_for('index'))
         elif not r.ok:
-            flash(f"Error fetching public profile: {r.status_code} — {r.text}", "error")
+            flash(
+                f"Error fetching public profile: {r.status_code} — {r.text}", "error")
             return redirect(url_for('index'))
         trackers = r.json()
 
         friends = []
         are_friends = False
-        r = requests.get(f"{API}/api/users/{username}/friends", headers=headers)
+        r = requests.get(
+            f"{API}/api/users/{username}/friends", headers=headers)
         if r.ok:
             are_friends = True
             friends = r.json()
@@ -322,15 +507,18 @@ def public_profile(username):
 
     return render_template('user.html', username=username, friends=friends, trackers=trackers, are_friends=are_friends)
 
+
 @app.route('/api/users/<username>/trackers')
 def proxy_users_trackers(username):
     token = session.get('token')
     headers = {}
     if token:
         headers['Authorization'] = f"Bearer {token}"
-    upstream = requests.get(f"{API}/api/trackers/{username}/trackers", headers=headers)
+    upstream = requests.get(
+        f"{API}/api/trackers/{username}/trackers", headers=headers)
     return (upstream.content, upstream.status_code,
-            [('Content-Type', upstream.headers.get('Content-Type',''))])
+            [('Content-Type', upstream.headers.get('Content-Type', ''))])
+
 
 @app.route("/api/users/search")
 def proxy_user_search():
@@ -346,10 +534,10 @@ def proxy_user_search():
 
     # read query-string exactly as the browser sent it
     prefix = request.args.get("prefix", "")
-    limit  = request.args.get("limit", "10")      # optional – default=10
+    limit = request.args.get("limit", "10")      # optional – default=10
 
-    headers =  {"Authorization": f"Bearer {token}",
-                "Accept-Encoding": "identity"}
+    headers = {"Authorization": f"Bearer {token}",
+               "Accept-Encoding": "identity"}
 
     try:
         r = requests.get(
@@ -361,10 +549,11 @@ def proxy_user_search():
         return (r.text, r.status_code, r.headers.items())
     except requests.RequestException as e:
         return (str(e), 502)
-    
+
+
 @app.route("/api/users/<username>/friends")
 def proxy_read_friends(username: str):
-    token   = session.get("token")         # may be None for anonymous
+    token = session.get("token")         # may be None for anonymous
     headers = {
         "Accept-Encoding": "identity",
         **({"Authorization": f"Bearer {token}"} if token else {})
@@ -383,7 +572,8 @@ def proxy_read_friends(username: str):
         "Transfer-Encoding",
         "Connection",
     }
-    clean_headers = [(k, v) for k, v in r.headers.items() if k.lower() not in hop_by_hop]
+    clean_headers = [(k, v) for k, v in r.headers.items()
+                     if k.lower() not in hop_by_hop]
     return r.content, r.status_code, clean_headers
 
 
@@ -397,6 +587,7 @@ def proxy_add_friend(username):
                       headers={"Authorization": f"Bearer {token}"})
     return (r.text, r.status_code, r.headers.items())
 
+
 @app.route("/api/users/<username>/friends", methods=["DELETE"])
 def proxy_delete_friend(username):
     token = session.get("token")
@@ -407,6 +598,7 @@ def proxy_delete_friend(username):
         headers={"Authorization": f"Bearer {token}"}
     )
     return (r.text, r.status_code, r.headers.items())
+
 
 @app.context_processor
 def inject_current_user():
@@ -424,6 +616,7 @@ def inject_current_user():
         except requests.RequestException:
             pass
     return {"current_user": user}
+
 
 if __name__ == '__main__':
     app.run(debug=True)

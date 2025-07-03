@@ -1,70 +1,119 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% block title %}Dashboard{% endblock %} {% block
+content %}
 
 <div class="container mx-auto px-6 py-8">
   <h2 class="text-3xl font-bold mb-6 text-gray-800">
-    Hello, {{ user.username }}!
-    <span id="friend-badge"
-          class="inline-flex items-center gap-1 px-3 py-1 rounded-full
-                text-sm font-medium bg-blue-100 text-blue-700
-                hover:bg-blue-200 transition cursor-pointer">
+    Hello, {{ user.first_name or user.username }}!
+    <span
+      id="friend-badge"
+      class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition cursor-pointer"
+    >
       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
         <!-- head -->
         <path d="M10 10a4 4 0 100-8 4 4 0 000 8z" />
         <!-- shoulders/body -->
-        <path fill-rule="evenodd" d="M4 18a6 6 0 0112 0H4z" clip-rule="evenodd" />
+        <path
+          fill-rule="evenodd"
+          d="M4 18a6 6 0 0112 0H4z"
+          clip-rule="evenodd"
+        />
       </svg>
       <span id="friend-count">{{ friends|length }}</span>
       <span id="friend-label">friends</span>&nbsp;
     </span>
   </h2>
 
- 
-  
   <div class="flex items-center space-x-4 mb-6">
-    <button id="new-tracker-btn"
-      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+    <button
+      id="new-tracker-btn"
+      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+    >
       New Tracker
     </button>
     <div class="space-x-2">
-      <label><input type="radio" name="viewRange" value="week" checked> This Week</label>
-      <label><input type="radio" name="viewRange" value="month"> This Month</label>
-      <label><input type="radio" name="viewRange" value="year"> Last 365</label>
+      <label
+        ><input type="radio" name="viewRange" value="week" checked /> This
+        Week</label
+      >
+      <label
+        ><input type="radio" name="viewRange" value="month" /> This Month</label
+      >
+      <label
+        ><input type="radio" name="viewRange" value="year" /> Last 365</label
+      >
     </div>
   </div>
-  
+
   <!-- Create/Edit Tracker Modal -->
-  <div id="new-tracker-modal"
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-40">
+  <div
+    id="new-tracker-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-40"
+  >
     <div class="bg-white rounded-lg shadow-lg w-96 p-6 relative z-50">
       <h3 class="text-xl font-semibold mb-4" id="modal-title">
         Create New Tracker
       </h3>
-      <form id="new-tracker-form" action="{{ url_for('new_tracker') }}" method="POST">
+      <form
+        id="new-tracker-form"
+        action="{{ url_for('new_tracker') }}"
+        method="POST"
+      >
         <!-- Title -->
         <div class="mb-4">
-          <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-          <input type="text" name="title" id="title" required
-                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+          <label for="title" class="block text-sm font-medium text-gray-700"
+            >Title</label
+          >
+          <input
+            type="text"
+            name="title"
+            id="title"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          />
         </div>
         <!-- Color -->
         <div class="mb-4">
-          <label for="color" class="block text-sm font-medium text-gray-700">Color</label>
-          <input type="color" name="color" id="color" value="#3b82f6"
-                 class="mt-1 w-12 h-8 p-0 border-0" />
+          <label for="color" class="block text-sm font-medium text-gray-700"
+            >Color</label
+          >
+          <input
+            type="color"
+            name="color"
+            id="color"
+            value="#3b82f6"
+            class="mt-1 w-12 h-8 p-0 border-0"
+          />
         </div>
         <!-- Goal count -->
         <div class="mb-4">
-          <label for="rule_count" class="block text-sm font-medium text-gray-700">Goal count</label>
-          <input type="number" name="rule_count" id="rule_count" min="1" value="1" required
-                 class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+          <label
+            for="rule_count"
+            class="block text-sm font-medium text-gray-700"
+            >Goal count</label
+          >
+          <input
+            type="number"
+            name="rule_count"
+            id="rule_count"
+            min="1"
+            value="1"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          />
         </div>
         <!-- Timeframe -->
         <div class="mb-4">
-          <label for="rule_period" class="block text-sm font-medium text-gray-700">Timeframe</label>
-          <select name="rule_period" id="rule_period" required
-                  class="mt-1 block w-full border border-gray-300 rounded px-3 py-2">
+          <label
+            for="rule_period"
+            class="block text-sm font-medium text-gray-700"
+            >Timeframe</label
+          >
+          <select
+            name="rule_period"
+            id="rule_period"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          >
             <option value="daily">Daily</option>
             <option value="weekdays">Every Weekday</option>
             <option value="weekend">Every Weekend</option>
@@ -76,19 +125,36 @@
         </div>
         <!-- Type -->
         <div class="mb-4">
-          <label for="widget_type" class="block text-sm font-medium text-gray-700">Type</label>
-          <select name="widget_type" id="widget_type" required
-                  class="mt-1 block w-full border border-gray-300 rounded px-3 py-2">
-            <option value="boolean">Toggle</option> <!-- boolean -->
+          <label
+            for="widget_type"
+            class="block text-sm font-medium text-gray-700"
+            >Type</label
+          >
+          <select
+            name="widget_type"
+            id="widget_type"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          >
+            <option value="boolean">Toggle</option>
+            <!-- boolean -->
             <option value="counter">Counter</option>
             <option value="input">Input</option>
           </select>
         </div>
         <!-- Visibility -->
         <div class="mb-4">
-          <label for="visibility" class="block text-sm font-medium text-gray-700">Visibility</label>
-          <select name="visibility" id="visibility" required
-                  class="mt-1 block w-full border border-gray-300 rounded px-3 py-2">
+          <label
+            for="visibility"
+            class="block text-sm font-medium text-gray-700"
+            >Visibility</label
+          >
+          <select
+            name="visibility"
+            id="visibility"
+            required
+            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+          >
             <option value="private">Private</option>
             <option value="friends">Friends</option>
             <option value="public">Public</option>
@@ -97,17 +163,28 @@
         <!-- Actions -->
         <div class="flex justify-between items-center">
           <div>
-            <button type="button" id="cancel-new-tracker"
-                    class="px-4 py-2 rounded border">Cancel</button>
+            <button
+              type="button"
+              id="cancel-new-tracker"
+              class="px-4 py-2 rounded border"
+            >
+              Cancel
+            </button>
           </div>
           <div class="space-x-2">
             <!-- When in “edit” mode, we will un-hide this Delete button -->
-            <button type="button" id="delete-tracker-btn"
-                    class="px-4 py-2 bg-red-500 text-white rounded hidden">
+            <button
+              type="button"
+              id="delete-tracker-btn"
+              class="px-4 py-2 bg-red-500 text-white rounded hidden"
+            >
               Delete Tracker
             </button>
-            <button type="submit"
-                    class="px-4 py-2 bg-blue-500 text-white rounded" id="save-btn">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-500 text-white rounded"
+              id="save-btn"
+            >
               Create
             </button>
           </div>
@@ -115,71 +192,99 @@
       </form>
     </div>
   </div>
-  
+
   <!-- Delete Confirmation Modal -->
-  <div id="delete-confirm-modal"
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div
+    id="delete-confirm-modal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"
+  >
     <div class="bg-white rounded-lg shadow-lg w-96 p-6 relative z-60">
       <h3 class="text-xl font-semibold mb-4 text-red-600">Confirm Delete</h3>
       <p class="mb-4">
-        Type the name of the tracker “<span id="confirm-tracker-name"></span>” to confirm deletion:
+        Type the name of the tracker “<span id="confirm-tracker-name"></span>”
+        to confirm deletion:
       </p>
-      <input type="text" id="confirm-name-input"
-             class="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
+      <input
+        type="text"
+        id="confirm-name-input"
+        class="w-full border border-gray-300 rounded px-3 py-2 mb-4"
+      />
       <div class="flex justify-end space-x-2">
-        <button type="button" id="cancel-delete-btn"
-                class="px-4 py-2 rounded border">Cancel</button>
-        <button type="button" id="confirm-delete-btn"
-                class="px-4 py-2 bg-red-600 text-white rounded">DELETE</button>
+        <button
+          type="button"
+          id="cancel-delete-btn"
+          class="px-4 py-2 rounded border"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          id="confirm-delete-btn"
+          class="px-4 py-2 bg-red-600 text-white rounded"
+        >
+          DELETE
+        </button>
       </div>
     </div>
   </div>
 
   <!-- Dashboard Cards -->
-  <div id="calendar-container"
-       class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div
+    id="calendar-container"
+    class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+  >
     {% for t in trackers %}
-      <div
-        class="tracker-card bg-white rounded-lg shadow p-4 z-10"
-        data-tracker-id="{{ t.id }}"
-        data-aggregate='{{ t.aggregate | default([]) | tojson }}'
-        data-rule='{{ t.rule | tojson }}'
-        data-color="{{ t.color }}"
-        data-visibility="{{ t.visibility }}"
-        data-widget-type="{{ t.widget_type }}"
-      >
-        <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn">
-          {{ t.name }}
-        </h3>
-        <p class="text-sm mb-4 text-gray-600 no-select">
-          {% for period, count in t.rule.items() %}
-            {{ count }}x {{ period.replace('_',' ') }}
-          {% endfor %}
-        </p>
-        <div class="calendar grid grid-cols-7 gap-2"></div>
-      </div>
+    <div
+      class="tracker-card bg-white rounded-lg shadow p-4 z-10"
+      data-tracker-id="{{ t.id }}"
+      data-aggregate="{{ t.aggregate | default([]) | tojson }}"
+      data-rule="{{ t.rule | tojson }}"
+      data-color="{{ t.color }}"
+      data-visibility="{{ t.visibility }}"
+      data-widget-type="{{ t.widget_type }}"
+    >
+      <h3 class="text-xl font-semibold mb-3 hover:underline edit-tracker-btn">
+        {{ t.name }}
+      </h3>
+      <p class="text-sm mb-4 text-gray-600 no-select">
+        {% for period, count in t.rule.items() %} {{ count }}x {{
+        period.replace('_',' ') }} {% endfor %}
+      </p>
+      <div class="calendar grid grid-cols-7 gap-2"></div>
+    </div>
     {% endfor %}
   </div>
 </div>
 
-<div id="friends-overlay"
-     class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-  <div class="bg-white w-80 max-w-[92vw] max-h-[80vh] rounded-xl shadow-xl
-              p-6 flex flex-col scale-90 opacity-0
-              transition duration-200 ease-out"
-       id="friends-panel">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Friends</h3>
-        <!-- old: <button id="friends-close">×</button> -->
-        <button id="mode-toggle"
-                class="p-2 text-gray-500 hover:text-gray-800"
-                aria-label="Toggle delete mode">
-          <svg id="mode-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <!-- Pencil icon path -->
-            <path d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"/>
-          </svg>
-        </button>
-      </div>
+<div
+  id="friends-overlay"
+  class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50"
+>
+  <div
+    class="bg-white w-80 max-w-[92vw] max-h-[80vh] rounded-xl shadow-xl p-6 flex flex-col scale-90 opacity-0 transition duration-200 ease-out"
+    id="friends-panel"
+  >
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Friends</h3>
+      <!-- old: <button id="friends-close">×</button> -->
+      <button
+        id="mode-toggle"
+        class="p-2 text-gray-500 hover:text-gray-800"
+        aria-label="Toggle delete mode"
+      >
+        <svg
+          id="mode-icon"
+          class="w-6 h-6"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <!-- Pencil icon path -->
+          <path
+            d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1 0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"
+          />
+        </svg>
+      </button>
+    </div>
     <ul id="friends-list" class="space-y-3 overflow-y-auto pr-1 flex-1"></ul>
   </div>
 </div>
@@ -206,40 +311,45 @@
   }
 
   @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.1); }
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
   }
 </style>
 
 <script>
   // Show/Hide “Create/Edit” modal
-  const openBtn    = document.getElementById('new-tracker-btn');
-  const modal      = document.getElementById('new-tracker-modal');
-  const cancelBtn  = document.getElementById('cancel-new-tracker');
-  const form       = document.getElementById('new-tracker-form');
-  const saveBtn    = document.getElementById('save-btn');
-  const deleteBtn  = document.getElementById('delete-tracker-btn');
+  const openBtn = document.getElementById('new-tracker-btn');
+  const modal = document.getElementById('new-tracker-modal');
+  const cancelBtn = document.getElementById('cancel-new-tracker');
+  const form = document.getElementById('new-tracker-form');
+  const saveBtn = document.getElementById('save-btn');
+  const deleteBtn = document.getElementById('delete-tracker-btn');
   const titleInput = document.getElementById('title');
   const colorInput = document.getElementById('color');
   const countInput = document.getElementById('rule_count');
-  const periodSel  = document.getElementById('rule_period');
-  const type       = document.getElementById('widget_type');
-  const visSel     = document.getElementById('visibility');
+  const periodSel = document.getElementById('rule_period');
+  const type = document.getElementById('widget_type');
+  const visSel = document.getElementById('visibility');
   const modalTitle = document.getElementById('modal-title');
 
   openBtn.addEventListener('click', () => {
     // Prepare for “Create” mode
     form.action = "{{ url_for('new_tracker') }}";
-    modalTitle.textContent = "Create New Tracker";
-    saveBtn.textContent = "Create";
-    deleteBtn.classList.add('hidden');  // hide Delete in “create” mode
+    modalTitle.textContent = 'Create New Tracker';
+    saveBtn.textContent = 'Create';
+    deleteBtn.classList.add('hidden'); // hide Delete in “create” mode
 
     // Clear out any previous values
-    titleInput.value   = '';
-    colorInput.value   = '#3b82f6';
-    countInput.value   = '1';
-    periodSel.value    = 'daily';
-    visSel.value       = 'private';
+    titleInput.value = '';
+    colorInput.value = '#3b82f6';
+    countInput.value = '1';
+    periodSel.value = 'daily';
+    visSel.value = 'private';
 
     modal.classList.remove('hidden');
   });
@@ -266,20 +376,21 @@
     const container = document.getElementById('calendar-container');
 
     Sortable.create(container, {
-      animation: 150,                // smooth slide
-      ghostClass: 'opacity-50',      // styling while dragging
-      draggable: '.tracker-card',    // only these items
+      animation: 150, // smooth slide
+      ghostClass: 'opacity-50', // styling while dragging
+      draggable: '.tracker-card', // only these items
 
-      onEnd: (evt) => {
-        const orderedIds = Array.from(container.children)
-          .map(el => parseInt(el.dataset.trackerId));
+      onEnd: evt => {
+        const orderedIds = Array.from(container.children).map(el =>
+          parseInt(el.dataset.trackerId)
+        );
 
         fetch('/trackers/reorder', {
           method: 'PUT',
-          headers: {'Content-Type':'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ordered_ids: orderedIds }),
         });
-      }
+      },
     });
   });
 </script>
@@ -287,33 +398,35 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     /** Elements */
-    const badge   = document.getElementById('friend-badge');
+    const badge = document.getElementById('friend-badge');
     const overlay = document.getElementById('friends-overlay');
-    const panel   = document.getElementById('friends-panel');
-    const listUL  = document.getElementById('friends-list');
-    const modeBtn   = document.getElementById('mode-toggle');
-    const modeIcon  = document.getElementById('mode-icon');
+    const panel = document.getElementById('friends-panel');
+    const listUL = document.getElementById('friends-list');
+    const modeBtn = document.getElementById('mode-toggle');
+    const modeIcon = document.getElementById('mode-icon');
     const countEl = document.getElementById('friend-count');
 
     /* `me` as real JS object */
     const me = JSON.parse('{{ user | tojson | safe }}');
 
     // Open overlay
-    async function open(){
-      try{
+    async function open() {
+      try {
         await fetchFriends();
         overlay.classList.remove('hidden');
         // Tailwind-only “pop-in” without @keyframes
-        requestAnimationFrame(()=>panel.classList.remove('scale-90','opacity-0'));
-      }catch(err){
-        console.error('[friends-overlay] fetch failed',err);
+        requestAnimationFrame(() =>
+          panel.classList.remove('scale-90', 'opacity-0')
+        );
+      } catch (err) {
+        console.error('[friends-overlay] fetch failed', err);
         alert('Could not fetch friends');
       }
     }
     // Close overlay
-    function close(){
-      panel.classList.add('scale-90','opacity-0');
-      setTimeout(()=>overlay.classList.add('hidden'), 200);
+    function close() {
+      panel.classList.add('scale-90', 'opacity-0');
+      setTimeout(() => overlay.classList.add('hidden'), 200);
     }
 
     // open/close the friends overlay
@@ -330,7 +443,7 @@
       deletionMode = !!deletionMode;
       if (deletionMode) {
         // switch to trash icon
-        modeIcon.setAttribute('viewBox','0 0 20 20');
+        modeIcon.setAttribute('viewBox', '0 0 20 20');
         modeIcon.innerHTML = `
           <!-- trash icon -->
           <path fill-rule="evenodd"
@@ -339,14 +452,14 @@
         listUL.classList.add('deletion-mode');
       } else {
         // switch to pencil icon
-        modeIcon.setAttribute('viewBox','0 0 20 20');
+        modeIcon.setAttribute('viewBox', '0 0 20 20');
         modeIcon.innerHTML = `
           <path d="M17.414 2.586a2 2 0 010 2.828l-10 10a1 1 0 01-.464.263l-4 1a1 1
             0 01-1.213-1.213l1-4a1 1 0 01.263-.464l10-10a2 2 0 012.828 0z"/>`;
         listUL.classList.remove('deletion-mode');
-        listUL.querySelectorAll('li.dragging').forEach(li => 
-          li.classList.remove('dragging')
-        );
+        listUL
+          .querySelectorAll('li.dragging')
+          .forEach(li => li.classList.remove('dragging'));
       }
 
       // enable/disable dragging on list items
@@ -399,11 +512,11 @@
             encodeURIComponent(friendToRemove),
           {
             method: 'DELETE',
-            credentials: 'include'
+            credentials: 'include',
           }
         );
         if (!res.ok) throw new Error(`Status ${res.status}`);
-        
+
         // re-fetch & rerender
         const friends = await fetchFriends();
         renderBadge(friends.length);
@@ -418,7 +531,7 @@
     });
 
     /** Fetch friends from backend */
-    async function fetchFriends(){
+    async function fetchFriends() {
       const friends = await window.apiFetch(
         `/api/users/${encodeURIComponent(me.username)}/friends`
       );
@@ -428,7 +541,8 @@
 
     function renderBadge(count) {
       countEl.textContent = count;
-      document.getElementById('friend-label').textContent =`friend${count === 1 ? '' : 's'}`;
+      document.getElementById('friend-label').textContent =
+        `friend${count === 1 ? '' : 's'}`;
     }
 
     // Initial load
@@ -442,18 +556,25 @@
     })();
 
     /** Replace badge + list */
-    function renderList(friends){
+    function renderList(friends) {
       countEl.textContent = friends.length;
       listUL.innerHTML = friends.length
-        ? friends.map(u => `
+        ? friends
+            .map(u => {
+              const name = u.first_name
+                ? `${u.first_name} ${u.last_name || ''}`.trim()
+                : u.username;
+              return `
             <li data-username="${u.username}"
                 class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100">
               <a href="/u/${u.username}" class="no-underline flex items-center gap-3">
-                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${u.username[0]}</span>
-                <span class="text-gray-800">${u.username}</span>
+                <span class="inline-flex justify-center items-center h-8 w-8 rounded-full bg-blue-500 text-white uppercase text-sm">${name[0]}</span>
+                <span class="text-gray-800">${name}</span>
               </a>
             </li>
-          `).join('')
+          `;
+            })
+            .join('')
         : '<li class="text-gray-500 px-3 py-2">No friends yet</li>';
     }
 
@@ -464,20 +585,22 @@
 
 <style>
   .no-select {
-    -webkit-touch-callout: none !important;   /* no long-press menu */
-    -webkit-user-drag: none !important;       /* no drag start */
-    -webkit-user-select: none !important;     /* Safari/Chrome */
-    -moz-user-select: none !important;        /* Firefox */
-    -ms-user-select: none !important;         /* IE10+ */
-    user-select: none !important;             /* Standard */
+    -webkit-touch-callout: none !important; /* no long-press menu */
+    -webkit-user-drag: none !important; /* no drag start */
+    -webkit-user-select: none !important; /* Safari/Chrome */
+    -moz-user-select: none !important; /* Firefox */
+    -ms-user-select: none !important; /* IE10+ */
+    user-select: none !important; /* Standard */
   }
 </style>
 
 <script>
   document.querySelectorAll('.no-select').forEach(el => {
     // Prevent mouse/touch from ever starting text selection
-    el.addEventListener('mousedown',  e => e.preventDefault());
-    el.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    el.addEventListener('mousedown', e => e.preventDefault());
+    el.addEventListener('touchstart', e => e.preventDefault(), {
+      passive: false,
+    });
     // Prevent the context menu (long-press) on iOS
     el.addEventListener('contextmenu', e => e.preventDefault());
   });

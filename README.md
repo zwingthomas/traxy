@@ -65,28 +65,53 @@ Browse the public profile of **zwingthomas** on App Engine Standard and Cloud Ru
 # 🛠️ Roadmap
 
 ###
+## Backlog:
+###
+
+**2 hours** - Be able to reset user information to nothing in settings
+
+**1 hour** - Delete account
+
+**2 hours** - Add days of week to calendar somehow
+
+**20 hours** - Full IdP sign up: Google, Apple, Github, X, LinkedIn, Meta, Microsoft
+
+**30 hours** - After everything is done, make it pretty (UI/UX - three.js)
+
+**10 hours** - Add photos of habits like Gymrats
+
+
+
+###
 ## MUST HAVES
 ###
 
 
 June 14
 
-**6 - 12 hours** - Database migration to VM
+✅ **2 hours** - Have First Name / Last Name / Email / Phone
 
-**6 - 10 hours** - Make adding friends, friend requests. Have another icon similar to friend badge next to it with friend requests
-
-
-June 21
-
-**2 hours** - See your profile as you view it, publicly, and as friends will see it
-
-**2 hours** - Have First Name / Last Name / Email / Phone
+✅ **12 hours** - Allow people to change their password / forget their password
 
 **2 hours** - Make dashboard endpoint be /u/active-user-username instead of /dashboard
 
-**12 hours** - Allow people to change their password / forget their password
+✅ **3 hours** - Make password visibility togglable around the site
 
-**4 hours** - Show error dynamically if username is already taken when signing up
+✅ **2 hours** - Set up a development environment (shared DB)
+
+✅ **1 hour** - Request optional first name, last name, email and phone on sign up
+
+✅ **8 hours** - Make username changable along with user's URL endpoint
+
+June 21
+
+**4 hours** - Show error dynamically if username, email, or phone is already taken when signing up
+
+**6 hours** - Email and phone verification
+
+**2 hours** - See your profile as you view it, publicly, and as various groups will see it
+
+**6 - 10 hours** - Make adding friends, friend requests. Have another icon similar to friend badge next to it with friend requests
 
 
 June 28
@@ -108,6 +133,8 @@ July 5
 
 **10 hours** - Implement testing frameworks
 
+**6 - 12 hours** - Database migration to VM
+
 
 July 12
 
@@ -124,14 +151,14 @@ July 12
 
 July 19
 
-**8 hours** - Make username changable along with user's URL endpoint
+**8 hours** - Shared trackers
 
-**12 hours** - Be able to group trackers and have a overview as well
+**12 hours** - Be able to group trackers and have an overview as well
 
 
 July 26
 
-**15 - 25 hours** - Shared trackers
+**7 - 18 hours** - Shared trackers
 
 
 August 2
@@ -181,7 +208,7 @@ September 20, 27
 
 Oct, Nov, Dec
 
-**60 - 80 hours** hours - Journalling/blog epic
+**60 - 80 hours** - Journalling/blog epic
 
 
 2026

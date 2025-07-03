@@ -6,9 +6,9 @@ from sqlalchemy.orm import sessionmaker
 
 import secrets_manager
 
-db_user       = secrets_manager.get_secret("DB_USER")
-db_pass       = secrets_manager.get_secret("DB_PASS")
-db_name       = secrets_manager.get_secret("DB_NAME")
+db_user = secrets_manager.get_secret("DB_USER")
+db_pass = secrets_manager.get_secret("DB_PASS")
+db_name = secrets_manager.get_secret("DB_NAME")
 connection_id = secrets_manager.get_secret("CLOUD_SQL_CONNECTION_NAME")
 
 # Build the SQLAlchemy URL in the correct format:
