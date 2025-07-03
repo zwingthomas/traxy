@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, redirect, url_for, request, session, flash, g
+from flask import Flask, Response, jsonify, render_template, redirect, url_for, request, session, flash, g
 import os
 import requests
 import secrets_manager
@@ -95,7 +95,15 @@ def _auth_headers():
 def proxy_get_profile():
     r = requests.get(f"{API}/api/users/me/profile",
                      headers=_auth_headers(), timeout=5)
-    return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
+    try:
+        return jsonify(r.json()), r.status_code
+    except ValueError:
+        # Fallback for plain text or broken responses
+        headers = _strip_hop_by_hop(r.headers)
+        headers.pop("Content-Encoding", None)
+        headers.pop("Transfer-Encoding", None)
+        headers["Content-Type"] = "text/plain"
+        return Response(response=r.text, status=r.status_code, headers=headers)
 
 
 @app.route("/api/users/me/profile", methods=["PATCH"])
@@ -106,7 +114,14 @@ def proxy_update_profile():
                        json=request.get_json(force=True), timeout=5)
     if r.status_code >= 400:
         app.logger.error("Profile‐PATCH failed: %s %s", r.status_code, r.text)
-    return (r.content, r.status_code, _strip_hop_by_hop(r.headers))
+    try:
+        return jsonify(r.json(), r.status_code)
+    except ValueError:
+        headers = _strip_hop_by_hop(r.headers)
+        headers.pop("Content-Encoding", None)
+        headers.pop("Transfer-Encoding", None)
+        headers["Content-Type"] = "text/plain"
+        return Response(response=r.content, status=r.status_code, headers=headers)
 
 
 @app.route("/api/users/me/password", methods=["PUT"])

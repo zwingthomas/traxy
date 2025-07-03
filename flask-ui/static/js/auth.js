@@ -46,6 +46,7 @@ window.apiFetch = async function (path, opts = {}) {
   // }
 
   // If there's JSON, parse it; otherwise return the raw Response
+  let data = null;
   const ct = res.headers.get('Content-Type') || '';
   if (ct.includes('application/json')) {
     try {
