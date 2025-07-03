@@ -4,6 +4,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# nvim log 
+*.nvimlog*
+
 # virtual env folders
 .env
 .env.local
